@@ -155,7 +155,6 @@ async function load() {
   renderUserList();
 
   document.getElementById("intervalMinutes").value = String(clampIntervalMinutes(settings.intervalMinutes));
-  document.getElementById("obsParams").value = String(settings.obsParams || DEFAULTS.obsParams);
   document.getElementById("joinNotify").checked = Boolean(settings.joinNotify);
   document.getElementById("joinNotifyCooldownMinutes").value = String(
     clampJoinNotifyCooldownMinutes(settings.joinNotifyCooldownMinutes)
@@ -209,7 +208,7 @@ async function save() {
     accent: normalizeAccent(document.getElementById("accent").value),
     density: normalizeDensity(document.getElementById("density").value),
     dashboardView: normalizeDashboardView(document.getElementById("dashboardView").value),
-    obsParams: String(document.getElementById("obsParams").value || "").trim() || DEFAULTS.obsParams
+    obsParams: settings.obsParams
   };
   settings = await window.api.setSettings(next);
   setStatus("Saved.");
@@ -333,7 +332,6 @@ window.api.onSettingsUpdated((s) => {
   perHostIntervalsState = settings.perHostIntervals && typeof settings.perHostIntervals === "object" ? settings.perHostIntervals : {};
   renderUserList();
   document.getElementById("intervalMinutes").value = String(clampIntervalMinutes(settings.intervalMinutes));
-  document.getElementById("obsParams").value = String(settings.obsParams || DEFAULTS.obsParams);
   document.getElementById("joinNotify").checked = Boolean(settings.joinNotify);
   document.getElementById("joinNotifyCooldownMinutes").value = String(
     clampJoinNotifyCooldownMinutes(settings.joinNotifyCooldownMinutes)

@@ -56,9 +56,9 @@ const DEFAULTS = {
   perHostIntervals: {},
   joinNotify: true,
   joinNotifyCooldownMinutes: 10,
-  autoTrackAllLive: false,
+  autoTrackAllLive: true,
   giftTrack: true,
-  giftNotify: false,
+  giftNotify: true,
   giftNotifyCooldownSeconds: 60,
   soundEnabled: true,
   soundType: "chime",
@@ -66,7 +66,7 @@ const DEFAULTS = {
   themeMode: "system",
   accent: "violet",
   density: "comfortable",
-  dashboardView: "table",
+  dashboardView: "kanban",
   obsParams:
     "showLikes=1&showChats=1&showGifts=1&showFollows=1&showJoins=1&bgColor=rgb(24,23,28)&fontColor=rgb(227,229,235)&fontSize=1.3em"
 };
@@ -498,6 +498,7 @@ function getSettings() {
 }
 
 function setSettings(next) {
+  const prevObsParams = String(store.get("obsParams") || DEFAULTS.obsParams).trim() || DEFAULTS.obsParams;
   const normalized = {
     usernames: uniqUsernames(next.usernames),
     intervalMinutes: clampIntervalMinutes(next.intervalMinutes),
@@ -515,7 +516,10 @@ function setSettings(next) {
     accent: normalizeAccent(next.accent),
     density: normalizeDensity(next.density),
     dashboardView: normalizeDashboardView(next.dashboardView),
-    obsParams: String(next.obsParams || "").trim() || DEFAULTS.obsParams
+    obsParams:
+      next && Object.prototype.hasOwnProperty.call(next, "obsParams")
+        ? String(next.obsParams || "").trim() || DEFAULTS.obsParams
+        : prevObsParams
   };
   store.set(normalized);
   scheduleChecks();
