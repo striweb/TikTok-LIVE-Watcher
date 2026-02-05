@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./styles.v2.css" />
   </head>
-  <body>
+  <body class="pageSettings">
     <header class="topbar">
       <div class="topbarLeft">
         <div class="titleRow">
@@ -50,196 +50,226 @@
         </div>
 
         <div class="col">
-          <section class="card">
-            <div class="cardHeader">
-              <div>
-                <div class="h3">Settings</div>
-                <div class="muted">Check interval + overlay parameters.</div>
-              </div>
-            </div>
-
-            <div class="grid2">
-              <div>
-                <label class="label" for="intervalMinutes">Interval (minutes)</label>
-                <input id="intervalMinutes" type="number" min="1" max="60" step="1" />
-                <div class="hint">Minimum 1 minute.</div>
-              </div>
-              <div></div>
-            </div>
-
-            <div class="grid2" style="margin-top: 12px;">
-              <div>
-                <label class="label">
-                  <input id="joinNotify" type="checkbox" />
-                  Notify when a watched viewer joins a LIVE (Join Tracker)
-                </label>
-                <div class="hint">Anti-spam: limits repeated notifications for the same viewer/host.</div>
-              </div>
-              <div>
-                <label class="label" for="joinNotifyCooldownMinutes">Cooldown (minutes)</label>
-                <input id="joinNotifyCooldownMinutes" type="number" min="0" max="180" step="1" />
-                <div class="hint">0 = no cooldown (not recommended).</div>
-              </div>
-            </div>
-
-            <div class="grid2" style="margin-top: 12px;">
-              <div>
-                <label class="label">
-                  <input id="autoTrackAllLive" type="checkbox" />
-                  Auto Track All LIVE (always-on)
-                </label>
-                <div class="hint">Automatically starts “All LIVE” tracking in the background when there are LIVE profiles.</div>
-              </div>
-              <div></div>
-            </div>
-
-            <div class="grid2" style="margin-top: 12px;">
-              <div>
-                <label class="label">
-                  <input id="giftTrack" type="checkbox" />
-                  Track gifts from watched viewers (Join Tracker)
-                </label>
-                <div class="hint">Logs “gift_sent” events (who, which live, time).</div>
-              </div>
-              <div>
-                <label class="label">
-                  <input id="giftNotify" type="checkbox" />
-                  Desktop notification on gift (optional)
-                </label>
-                <div class="hint">Off by default (can be noisy for busy chats).</div>
-              </div>
-            </div>
-
-            <div class="grid2" style="margin-top: 12px;">
-              <div>
-                <label class="label" for="giftNotifyCooldownSeconds">Gift notify cooldown (seconds)</label>
-                <input id="giftNotifyCooldownSeconds" type="number" min="0" max="3600" step="1" />
-                <div class="hint">Anti-spam for gift notifications (0 = no cooldown).</div>
-              </div>
-              <div></div>
-            </div>
-
-            <div class="grid2" style="margin-top: 12px;">
-              <div>
-                <label class="label">
-                  <input id="soundEnabled" type="checkbox" />
-                  Sound for notifications
-                </label>
-                <div class="hint">Plays sound on LIVE start and viewer_joined.</div>
-              </div>
-              <div>
-                <label class="label" for="soundType">Sound type</label>
-                <select id="soundType" class="select">
-                  <option value="chime">Chime</option>
-                  <option value="alert">Alert</option>
-                  <option value="beep">System beep</option>
-                  <option value="custom">Custom file</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="grid2" style="margin-top: 12px;">
-              <div>
-                <label class="label" for="soundCustomPath">Custom sound file</label>
-                <input id="soundCustomPath" type="text" spellcheck="false" placeholder="choose file…" />
-                <div class="actions" style="margin-top: 8px;">
-                  <button id="browseSound" class="btn">Browse</button>
-                  <button id="testSound" class="btn ghost">Test</button>
+          <div class="settingsStack">
+            <section class="card">
+              <div class="cardHeader">
+                <div>
+                  <div class="h3">Monitoring</div>
+                  <div class="muted">Status checks and viewer tracking.</div>
                 </div>
               </div>
-              <div></div>
-            </div>
 
-            <div class="grid2" style="margin-top: 12px;">
-              <div>
-                <label class="label" for="themeMode">Theme</label>
-                <select id="themeMode" class="select">
-                  <option value="system">System</option>
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                </select>
+              <div class="grid2">
+                <div>
+                  <label class="label" for="intervalMinutes">Interval (minutes)</label>
+                  <input id="intervalMinutes" type="number" min="1" max="60" step="1" />
+                  <div class="hint">Minimum 1 minute.</div>
+                </div>
+                <div>
+                  <label class="label">
+                    <input id="autoTrackAllLive" type="checkbox" />
+                    Auto Track All LIVE (always-on)
+                  </label>
+                  <div class="hint">Automatically starts “All LIVE” tracking in the background when there are LIVE profiles.</div>
+                </div>
               </div>
-              <div>
-                <label class="label" for="accent">Accent</label>
-                <select id="accent" class="select">
-                  <option value="violet">Violet</option>
-                  <option value="blue">Blue</option>
-                  <option value="teal">Teal</option>
-                  <option value="green">Green</option>
-                  <option value="amber">Amber</option>
-                  <option value="red">Red</option>
-                </select>
-              </div>
-            </div>
 
-            <div class="grid2" style="margin-top: 12px;">
-              <div>
-                <label class="label" for="density">Density</label>
-                <select id="density" class="select">
-                  <option value="comfortable">Comfortable</option>
-                  <option value="compact">Compact</option>
-                </select>
+              <div class="grid2" style="margin-top: 12px;">
+                <div>
+                  <label class="label">
+                    <input id="joinNotify" type="checkbox" />
+                    Notify when a watched viewer joins a LIVE (Join Tracker)
+                  </label>
+                  <div class="hint">Anti-spam: limits repeated notifications for the same viewer/host.</div>
+                </div>
+                <div>
+                  <label class="label" for="joinNotifyCooldownMinutes">Cooldown (minutes)</label>
+                  <input id="joinNotifyCooldownMinutes" type="number" min="0" max="180" step="1" />
+                  <div class="hint">0 = no cooldown (not recommended).</div>
+                </div>
               </div>
-              <div>
-                <label class="label" for="themePreset">Theme preset</label>
-                <div class="actions" style="justify-content:flex-start;">
-                  <select id="themePreset" class="select">
-                    <option value="">—</option>
-                    <option value="enterpriseDark">Enterprise Dark</option>
-                    <option value="neon">Neon</option>
-                    <option value="lightClean">Light Clean</option>
+            </section>
+
+            <section class="card">
+              <div class="cardHeader">
+                <div>
+                  <div class="h3">Gifts</div>
+                  <div class="muted">Tracking and notifications for gifts.</div>
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label class="label">
+                    <input id="giftTrack" type="checkbox" />
+                    Track gifts from watched viewers (Join Tracker)
+                  </label>
+                  <div class="hint">Logs “gift_sent” events (who, which live, time).</div>
+                </div>
+                <div>
+                  <label class="label">
+                    <input id="giftNotify" type="checkbox" />
+                    Desktop notification on gift (optional)
+                  </label>
+                  <div class="hint">Off by default (can be noisy for busy chats).</div>
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top: 12px;">
+                <div>
+                  <label class="label" for="giftNotifyCooldownSeconds">Gift notify cooldown (seconds)</label>
+                  <input id="giftNotifyCooldownSeconds" type="number" min="0" max="3600" step="1" />
+                  <div class="hint">Anti-spam for gift notifications (0 = no cooldown).</div>
+                </div>
+                <div></div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="cardHeader">
+                <div>
+                  <div class="h3">Sound</div>
+                  <div class="muted">Optional sound for notifications.</div>
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label class="label">
+                    <input id="soundEnabled" type="checkbox" />
+                    Sound for notifications
+                  </label>
+                  <div class="hint">Plays sound on LIVE start and viewer_joined.</div>
+                </div>
+                <div>
+                  <label class="label" for="soundType">Sound type</label>
+                  <select id="soundType" class="select">
+                    <option value="chime">Chime</option>
+                    <option value="alert">Alert</option>
+                    <option value="beep">System beep</option>
+                    <option value="custom">Custom file</option>
                   </select>
-                  <button id="applyPreset" class="btn">Apply</button>
                 </div>
-                <div class="hint">Will change Theme/Accent/Density.</div>
               </div>
-            </div>
 
-            <div class="grid2" style="margin-top: 12px;">
-              <div>
-                <label class="label" for="dashboardView">Dashboard view</label>
-                <select id="dashboardView" class="select">
-                  <option value="table">Table</option>
-                  <option value="kanban">Kanban</option>
+              <div class="grid2" style="margin-top: 12px;">
+                <div>
+                  <label class="label" for="soundCustomPath">Custom sound file</label>
+                  <input id="soundCustomPath" type="text" spellcheck="false" placeholder="choose file…" />
+                  <div class="actions" style="margin-top: 8px;">
+                    <button id="browseSound" class="btn">Browse</button>
+                    <button id="testSound" class="btn ghost">Test</button>
+                  </div>
+                </div>
+                <div></div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="cardHeader">
+                <div>
+                  <div class="h3">Appearance</div>
+                  <div class="muted">Theme, density, and dashboard layout.</div>
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label class="label" for="themeMode">Theme</label>
+                  <select id="themeMode" class="select">
+                    <option value="system">System</option>
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="label" for="accent">Accent</label>
+                  <select id="accent" class="select">
+                    <option value="violet">Violet</option>
+                    <option value="blue">Blue</option>
+                    <option value="teal">Teal</option>
+                    <option value="green">Green</option>
+                    <option value="amber">Amber</option>
+                    <option value="red">Red</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top: 12px;">
+                <div>
+                  <label class="label" for="density">Density</label>
+                  <select id="density" class="select">
+                    <option value="comfortable">Comfortable</option>
+                    <option value="compact">Compact</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="label" for="dashboardView">Dashboard view</label>
+                  <select id="dashboardView" class="select">
+                    <option value="table">Table</option>
+                    <option value="kanban">Kanban</option>
+                  </select>
+                  <div class="hint">Kanban shows profiles as columns (LIVE/Offline/Unknown).</div>
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top: 12px;">
+                <div>
+                  <label class="label" for="themePreset">Theme preset</label>
+                  <div class="actions" style="justify-content:flex-start;">
+                    <select id="themePreset" class="select">
+                      <option value="">—</option>
+                      <option value="enterpriseDark">Enterprise Dark</option>
+                      <option value="neon">Neon</option>
+                      <option value="lightClean">Light Clean</option>
+                    </select>
+                    <button id="applyPreset" class="btn">Apply</button>
+                  </div>
+                  <div class="hint">Will change Theme/Accent/Density.</div>
+                </div>
+                <div></div>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="cardHeader">
+                <div>
+                  <div class="h3">Maintenance</div>
+                  <div class="muted">Restart and clear cache.</div>
+                </div>
+              </div>
+              <div class="actions">
+                <button id="restartApp" class="btn">Restart app</button>
+                <button id="clearCacheRestart" class="btn ghost">Clear cache & restart</button>
+                <button id="clearCache" class="btn ghost">Clear cache (no restart)</button>
+                <button id="factoryReset" class="btn ghost">Factory reset (delete everything)</button>
+              </div>
+            </section>
+
+            <section class="card">
+              <div class="cardHeader">
+                <div>
+                  <div class="h3">Share config</div>
+                  <div class="muted">Export/Import settings + lists.</div>
+                </div>
+              </div>
+              <div class="actions">
+                <button id="exportConfig" class="btn">Export JSON</button>
+                <select id="importMode" class="select" style="max-width: 220px;">
+                  <option value="merge">Import mode: Merge</option>
+                  <option value="replace">Import mode: Replace</option>
                 </select>
-                <div class="hint">Kanban shows profiles as columns (LIVE/Offline/Unknown).</div>
+                <button id="importConfig" class="btn ghost">Import JSON</button>
               </div>
-              <div></div>
-            </div>
+            </section>
 
-            <div class="cardHeader" style="margin-top: 14px;">
-              <div>
-                <div class="h3">Maintenance</div>
-                <div class="muted">Restart and clear cache (helps with stuck resources/old UI versions).</div>
-              </div>
-            </div>
-            <div class="actions">
-              <button id="restartApp" class="btn">Restart app</button>
-              <button id="clearCacheRestart" class="btn ghost">Clear cache & restart</button>
-              <button id="clearCache" class="btn ghost">Clear cache (no restart)</button>
-              <button id="factoryReset" class="btn ghost">Factory reset (delete everything)</button>
-            </div>
-
-            <div class="cardHeader" style="margin-top: 14px;">
-              <div>
-                <div class="h3">Share config</div>
-                <div class="muted">Export/Import settings + lists (usernames + watched viewers).</div>
+            <div class="stickySave">
+              <div class="actions" style="margin-top:0;">
+                <button id="saveSettings" class="btn primary">Save settings</button>
+                <span id="statusSettings" class="status"></span>
               </div>
             </div>
-            <div class="actions">
-              <button id="exportConfig" class="btn">Export JSON</button>
-              <select id="importMode" class="select" style="max-width: 220px;">
-                <option value="merge">Import mode: Merge</option>
-                <option value="replace">Import mode: Replace</option>
-              </select>
-              <button id="importConfig" class="btn ghost">Import JSON</button>
-            </div>
-
-            <div class="actions" style="margin-top: 12px;">
-              <button id="saveSettings" class="btn primary">Save settings</button>
-              <span id="statusSettings" class="status"></span>
-            </div>
-          </section>
+          </div>
         </div>
       </div>
     </main>

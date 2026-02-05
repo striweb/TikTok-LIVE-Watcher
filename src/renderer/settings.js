@@ -1,5 +1,5 @@
 const DEFAULTS = {
-  usernames: ["kkstefanov", "ianaki82", "oceanclient1"],
+  usernames: [],
   intervalMinutes: 1,
   perHostIntervals: {},
   joinNotify: true,
