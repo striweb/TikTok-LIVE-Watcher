@@ -991,118 +991,128 @@ function buildSeries(type, days = 14) {
   return { keys, vals };
 }
 
-function renderBarChart({ title, cls, series }) {
-  const total = series.vals.reduce((a, b) => a + b, 0);
-  const max = Math.max(1, ...series.vals);
-  const w = 280;
-  const h = 56;
-  const gap = 3;
-  const barW = Math.floor((w - gap * (series.vals.length - 1)) / series.vals.length);
+let chartByKey = {};
 
-  const bars = series.vals
-    .map((v, i) => {
-      const bh = Math.max(2, Math.round((v / max) * (h - 6)));
-      const x = i * (barW + gap);
-      const y = h - bh;
-      const dateKey = series.keys[i];
-      return `<rect class="${cls} grow" style="--i:${i}" x="${x}" y="${y}" width="${barW}" height="${bh}" rx="3" data-date="${dateKey}" data-val="${v}"></rect>`;
-    })
-    .join("");
+function destroyCharts() {
+  for (const c of Object.values(chartByKey)) {
+    try {
+      c?.destroy?.();
+    } catch {}
+  }
+  chartByKey = {};
+}
 
-  return `
-    <div class="chartRow">
-      <div class="chartTop">
-        <div class="chartTitle">${title}</div>
-        <div class="chartTotal">Total: ${total}</div>
-      </div>
-      <svg class="chartSvg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
-        <line class="chartCross" x1="0" y1="0" x2="0" y2="${h}" opacity="0"></line>
-        <g class="chartBars">${bars}</g>
-      </svg>
-    </div>
-  `;
+function cssVar(name, fallback = "") {
+  try {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function makeBarChart(canvas, { title, series, color }) {
+  if (!canvas || !window.Chart) return null;
+  const reduce = prefersReducedMotion();
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const tooltipBg = cssVar("--panel", "rgba(20,20,28,0.94)");
+  const tooltipBorder = cssVar("--border", "rgba(255,255,255,0.12)");
+  const tooltipText = cssVar("--text", "rgba(232,233,239,0.92)");
+  const tooltipMuted = "rgba(232,233,239,0.70)";
+
+  return new window.Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: series.keys,
+      datasets: [
+        {
+          label: title,
+          data: series.vals,
+          backgroundColor: color,
+          borderRadius: 4,
+          borderSkipped: false,
+          maxBarThickness: 18
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: reduce ? false : { duration: 260, easing: "easeOutCubic" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: tooltipBg,
+          borderColor: tooltipBorder,
+          borderWidth: 1,
+          titleColor: tooltipText,
+          bodyColor: tooltipText,
+          footerColor: tooltipMuted,
+          displayColors: false,
+          callbacks: {
+            title: (items) => items?.[0]?.label || "",
+            label: (ctx2) => `${ctx2.dataset.label}: ${ctx2.raw ?? 0}`
+          }
+        }
+      },
+      scales: {
+        x: { display: false, grid: { display: false } },
+        y: { display: false, grid: { display: false }, beginAtZero: true }
+      }
+    }
+  });
 }
 
 function renderCharts() {
   const el = document.getElementById("charts");
   if (!el) return;
+  destroyCharts();
   const live = buildSeries("live_started", 14);
   const joins = buildSeries("viewer_joined", 14);
   const errs = buildSeries("error", 14);
-  el.innerHTML = [
-    renderBarChart({ title: "LIVE starts", cls: "live", series: live }),
-    renderBarChart({ title: "Viewer joins", cls: "join", series: joins }),
-    renderBarChart({ title: "Errors", cls: "err", series: errs })
-  ].join("");
-}
+  const total = (s) => s.vals.reduce((a, b) => a + b, 0);
+  el.innerHTML = `
+    <div class="chartRow">
+      <div class="chartTop">
+        <div class="chartTitle">LIVE starts</div>
+        <div class="chartTotal">Total: ${total(live)}</div>
+      </div>
+      <canvas class="chartCanvas" id="chartLive"></canvas>
+    </div>
+    <div class="chartRow">
+      <div class="chartTop">
+        <div class="chartTitle">Viewer joins</div>
+        <div class="chartTotal">Total: ${total(joins)}</div>
+      </div>
+      <canvas class="chartCanvas" id="chartJoins"></canvas>
+    </div>
+    <div class="chartRow">
+      <div class="chartTop">
+        <div class="chartTitle">Errors</div>
+        <div class="chartTotal">Total: ${total(errs)}</div>
+      </div>
+      <canvas class="chartCanvas" id="chartErrors"></canvas>
+    </div>
+  `;
 
-let chartTipEl = null;
-function ensureChartTip() {
-  if (chartTipEl && chartTipEl.isConnected) return chartTipEl;
-  chartTipEl = document.createElement("div");
-  chartTipEl.className = "chartTip";
-  chartTipEl.hidden = true;
-  document.body.appendChild(chartTipEl);
-  return chartTipEl;
-}
-
-function showChartTip({ x, y, text }) {
-  const tip = ensureChartTip();
-  tip.textContent = text;
-  tip.hidden = false;
-  tip.classList.add("show");
-
-  const pad = 12;
-  const r = tip.getBoundingClientRect();
-  let left = x + pad;
-  let top = y + pad;
-  if (left + r.width > window.innerWidth - 8) left = x - r.width - pad;
-  if (top + r.height > window.innerHeight - 8) top = y - r.height - pad;
-  tip.style.left = `${Math.max(8, left)}px`;
-  tip.style.top = `${Math.max(8, top)}px`;
-}
-
-function hideChartTip() {
-  if (!chartTipEl) return;
-  chartTipEl.classList.remove("show");
-  chartTipEl.hidden = true;
-}
-
-function setChartsActiveDate(dateKey) {
-  const root = document.getElementById("charts");
-  if (!root) return;
-  const rects = root.querySelectorAll("rect[data-date][data-val]");
-  const lines = root.querySelectorAll("line.chartCross");
-  if (!dateKey) {
-    rects.forEach((r) => {
-      r.classList.remove("hi");
-      r.classList.remove("dim");
-    });
-    lines.forEach((l) => l.setAttribute("opacity", "0"));
-    return;
-  }
-
-  rects.forEach((r) => {
-    const same = r.getAttribute("data-date") === dateKey;
-    r.classList.toggle("hi", same);
-    r.classList.toggle("dim", !same);
+  const joinColor = cssVar("--accent2", "rgba(99,102,241,0.55)");
+  chartByKey.live = makeBarChart(document.getElementById("chartLive"), {
+    title: "LIVE starts",
+    series: live,
+    color: "rgba(34, 197, 94, 0.55)"
   });
-
-  const svgs = root.querySelectorAll("svg.chartSvg");
-  svgs.forEach((svg) => {
-    const rect = svg.querySelector(`rect[data-date="${CSS.escape(dateKey)}"]`);
-    const line = svg.querySelector("line.chartCross");
-    if (!line) return;
-    if (!rect) {
-      line.setAttribute("opacity", "0");
-      return;
-    }
-    const x = Number(rect.getAttribute("x") || 0);
-    const w = Number(rect.getAttribute("width") || 0);
-    const cx = x + w / 2;
-    line.setAttribute("x1", String(cx));
-    line.setAttribute("x2", String(cx));
-    line.setAttribute("opacity", "1");
+  chartByKey.joins = makeBarChart(document.getElementById("chartJoins"), {
+    title: "Viewer joins",
+    series: joins,
+    color: joinColor
+  });
+  chartByKey.errors = makeBarChart(document.getElementById("chartErrors"), {
+    title: "Errors",
+    series: errs,
+    color: "rgba(239, 68, 68, 0.50)"
   });
 }
 
@@ -1417,27 +1427,6 @@ document.addEventListener("pointerout", (e) => {
   motionEl.classList.remove("isHot");
 });
 
-document.getElementById("charts")?.addEventListener("mousemove", (e) => {
-  const rect = e.target?.closest?.("rect[data-date][data-val]");
-  if (!rect) {
-    setChartsActiveDate(null);
-    hideChartTip();
-    return;
-  }
-  const dateKey = rect.getAttribute("data-date");
-  const v = rect.getAttribute("data-val");
-  const label = rect.getAttribute("class") || "";
-  const title =
-    label.includes("live") ? "LIVE starts" : label.includes("join") ? "Viewer joins" : label.includes("err") ? "Errors" : "Value";
-  showChartTip({ x: e.clientX, y: e.clientY, text: `${title} • ${dateKey}: ${v}` });
-  setChartsActiveDate(dateKey);
-});
-
-document.getElementById("charts")?.addEventListener("mouseleave", () => {
-  setChartsActiveDate(null);
-  hideChartTip();
-});
-
 document.getElementById("statusSort").addEventListener("change", (e) => {
   statusSort = String(e.target.value || "liveFirst");
   renderStatus();
@@ -1461,6 +1450,7 @@ window.api.onSettingsUpdated((s) => {
   usernamesState = uniqUsernames(settings.usernames);
   renderStatus();
   renderHealth();
+  renderCharts();
   updateDensityToggle();
 });
 

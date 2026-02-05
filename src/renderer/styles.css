@@ -1683,6 +1683,13 @@ html[data-density="compact"] .iconBtn {
   display: block;
 }
 
+.chartCanvas {
+  margin-top: 8px;
+  width: 100%;
+  height: 56px;
+  display: block;
+}
+
 .chartBars rect {
   fill: rgba(232, 233, 239, 0.22);
   transform-box: fill-box;
