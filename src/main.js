@@ -64,6 +64,7 @@ const DEFAULTS = {
   soundType: "chime",
   soundCustomPath: "",
   themeMode: "system",
+  darkVariant: "midnight",
   accent: "violet",
   density: "comfortable",
   dashboardView: "kanban",
@@ -437,6 +438,12 @@ function normalizeThemeMode(v) {
   return DEFAULTS.themeMode;
 }
 
+function normalizeDarkVariant(v) {
+  const t = String(v || "").trim();
+  if (t === "midnight" || t === "graphite" || t === "amoled" || t === "indigo") return t;
+  return DEFAULTS.darkVariant;
+}
+
 function normalizeAccent(v) {
   const a = String(v || "").trim();
   if (["violet", "blue", "teal", "green", "amber", "red"].includes(a)) return a;
@@ -490,6 +497,7 @@ function getSettings() {
     soundType: normalizeSoundType(store.get("soundType")),
     soundCustomPath: String(store.get("soundCustomPath") || ""),
     themeMode: normalizeThemeMode(store.get("themeMode")),
+    darkVariant: normalizeDarkVariant(store.get("darkVariant")),
     accent: normalizeAccent(store.get("accent")),
     density: normalizeDensity(store.get("density")),
     dashboardView: normalizeDashboardView(store.get("dashboardView")),
@@ -513,6 +521,7 @@ function setSettings(next) {
     soundType: normalizeSoundType(next.soundType),
     soundCustomPath: String(next.soundCustomPath || ""),
     themeMode: normalizeThemeMode(next.themeMode),
+    darkVariant: normalizeDarkVariant(next.darkVariant),
     accent: normalizeAccent(next.accent),
     density: normalizeDensity(next.density),
     dashboardView: normalizeDashboardView(next.dashboardView),

@@ -12,6 +12,7 @@ const DEFAULTS = {
   soundType: "chime",
   soundCustomPath: "",
   themeMode: "system",
+  darkVariant: "midnight",
   accent: "violet",
   density: "comfortable",
   dashboardView: "table",
@@ -47,6 +48,12 @@ function normalizeThemeMode(v) {
   const t = String(v || "").trim();
   if (t === "system" || t === "dark" || t === "light") return t;
   return DEFAULTS.themeMode;
+}
+
+function normalizeDarkVariant(v) {
+  const t = String(v || "").trim();
+  if (t === "midnight" || t === "graphite" || t === "amoled" || t === "indigo") return t;
+  return DEFAULTS.darkVariant;
 }
 
 function normalizeAccent(v) {
@@ -92,14 +99,14 @@ let usernamesState = [];
 let perHostIntervalsState = {};
 
 const THEME_PRESETS = {
-  enterpriseDark: { themeMode: "dark", accent: "violet", density: "comfortable" },
-  neon: { themeMode: "dark", accent: "teal", density: "compact" },
+  enterpriseDark: { themeMode: "dark", darkVariant: "midnight", accent: "violet", density: "comfortable" },
+  neon: { themeMode: "dark", darkVariant: "amoled", accent: "teal", density: "compact" },
   lightClean: { themeMode: "light", accent: "blue", density: "comfortable" },
-  midnightTeal: { themeMode: "dark", accent: "teal", density: "comfortable", dashboardView: "kanban" },
-  graphiteBlue: { themeMode: "dark", accent: "blue", density: "comfortable", dashboardView: "table" },
-  emeraldGlass: { themeMode: "dark", accent: "green", density: "comfortable", dashboardView: "kanban" },
-  amberOps: { themeMode: "dark", accent: "amber", density: "compact", dashboardView: "table" },
-  rubyAlert: { themeMode: "dark", accent: "red", density: "compact", dashboardView: "table" },
+  midnightTeal: { themeMode: "dark", darkVariant: "midnight", accent: "teal", density: "comfortable", dashboardView: "kanban" },
+  graphiteBlue: { themeMode: "dark", darkVariant: "graphite", accent: "blue", density: "comfortable", dashboardView: "table" },
+  emeraldGlass: { themeMode: "dark", darkVariant: "graphite", accent: "green", density: "comfortable", dashboardView: "kanban" },
+  amberOps: { themeMode: "dark", darkVariant: "indigo", accent: "amber", density: "compact", dashboardView: "table" },
+  rubyAlert: { themeMode: "dark", darkVariant: "amoled", accent: "red", density: "compact", dashboardView: "table" },
   iceLight: { themeMode: "light", accent: "teal", density: "comfortable", dashboardView: "table" },
   paperLight: { themeMode: "light", accent: "amber", density: "comfortable", dashboardView: "table" }
 };
@@ -176,6 +183,7 @@ async function load() {
   document.getElementById("soundType").value = normalizeSoundType(settings.soundType);
   document.getElementById("soundCustomPath").value = String(settings.soundCustomPath || "");
   document.getElementById("themeMode").value = normalizeThemeMode(settings.themeMode);
+  document.getElementById("darkVariant").value = normalizeDarkVariant(settings.darkVariant);
   document.getElementById("accent").value = normalizeAccent(settings.accent);
   document.getElementById("density").value = normalizeDensity(settings.density);
   document.getElementById("dashboardView").value = normalizeDashboardView(settings.dashboardView);
@@ -212,6 +220,7 @@ async function save() {
     soundType: normalizeSoundType(document.getElementById("soundType").value),
     soundCustomPath: String(document.getElementById("soundCustomPath").value || ""),
     themeMode: normalizeThemeMode(document.getElementById("themeMode").value),
+    darkVariant: normalizeDarkVariant(document.getElementById("darkVariant").value),
     accent: normalizeAccent(document.getElementById("accent").value),
     density: normalizeDensity(document.getElementById("density").value),
     dashboardView: normalizeDashboardView(document.getElementById("dashboardView").value),
@@ -277,6 +286,7 @@ document.getElementById("applyPreset").addEventListener("click", async () => {
   if (!preset) return;
 
   document.getElementById("themeMode").value = preset.themeMode;
+  if (preset.darkVariant) document.getElementById("darkVariant").value = preset.darkVariant;
   document.getElementById("accent").value = preset.accent;
   document.getElementById("density").value = preset.density;
   if (preset.dashboardView) document.getElementById("dashboardView").value = preset.dashboardView;
@@ -354,6 +364,7 @@ window.api.onSettingsUpdated((s) => {
   document.getElementById("soundType").value = normalizeSoundType(settings.soundType);
   document.getElementById("soundCustomPath").value = String(settings.soundCustomPath || "");
   document.getElementById("themeMode").value = normalizeThemeMode(settings.themeMode);
+  document.getElementById("darkVariant").value = normalizeDarkVariant(settings.darkVariant);
   document.getElementById("accent").value = normalizeAccent(settings.accent);
   document.getElementById("density").value = normalizeDensity(settings.density);
   document.getElementById("dashboardView").value = normalizeDashboardView(settings.dashboardView);
