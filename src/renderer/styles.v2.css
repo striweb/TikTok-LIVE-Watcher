@@ -25,6 +25,44 @@ html[data-theme="dark"] {
   --glass-shadow: 0 16px 34px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+html {
+  position: relative;
+}
+
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+  opacity: 0.08;
+  background:
+    radial-gradient(900px 520px at 18% 12%, rgba(255, 255, 255, 0.06), transparent 60%),
+    radial-gradient(900px 520px at 82% 22%, color-mix(in srgb, var(--accent2) 14%, transparent), transparent 60%),
+    radial-gradient(900px 520px at 30% 88%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 62%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 9px);
+  mix-blend-mode: overlay;
+}
+
+html::after {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  pointer-events: none;
+  z-index: -2;
+  opacity: 0.28;
+  background:
+    radial-gradient(900px 520px at 50% 50%, transparent 62%, rgba(0, 0, 0, 0.65) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html::before,
+  html::after {
+    mix-blend-mode: normal;
+  }
+}
+
 
 .cardHeader {
   display: flex;
