@@ -127,7 +127,7 @@
           <div id="statusList" class="statusList table"></div>
         </section>
 
-        <section class="card">
+        <section class="card" id="activityCard">
           <div class="cardHeader">
             <div>
               <div class="h3">Activity</div>
@@ -136,9 +136,23 @@
             <div class="actions" style="margin-top:0;">
               <button id="openHistoryFromActivity" class="btn ghost">History</button>
               <button id="openNotificationsFromActivity" class="btn">Notifications</button>
+              <button
+                class="collapseBtn"
+                type="button"
+                data-collapse="activityCard"
+                aria-expanded="true"
+                aria-label="Collapse Activity"
+                title="Collapse"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6"></path>
+                </svg>
+              </button>
             </div>
           </div>
-          <div id="activityList" class="activityList"></div>
+          <div class="cardBody">
+            <div id="activityList" class="activityList"></div>
+          </div>
         </section>
 
         <section class="card" id="giftsCard">
@@ -150,29 +164,75 @@
             <div class="actions" style="margin-top:0;">
               <button id="openJoinTrackerFromGifts" class="btn ghost">Join Tracker</button>
               <button id="openGiftNotifications" class="btn">Gifts</button>
+              <button
+                class="collapseBtn"
+                type="button"
+                data-collapse="giftsCard"
+                aria-expanded="true"
+                aria-label="Collapse Gifts"
+                title="Collapse"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6"></path>
+                </svg>
+              </button>
             </div>
           </div>
-          <div id="giftsList" class="activityList"></div>
+          <div class="cardBody">
+            <div id="giftsList" class="activityList"></div>
+          </div>
         </section>
 
-        <section class="card">
+        <section class="card" id="chartsCard">
           <div class="cardHeader">
             <div>
               <div class="h3">Charts</div>
               <div class="muted">Last 14 days (summary).</div>
             </div>
+            <div class="actions" style="margin-top:0; justify-content:flex-end;">
+              <button
+                class="collapseBtn"
+                type="button"
+                data-collapse="chartsCard"
+                aria-expanded="true"
+                aria-label="Collapse Charts"
+                title="Collapse"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6"></path>
+                </svg>
+              </button>
+            </div>
           </div>
-          <div id="charts" class="charts"></div>
+          <div class="cardBody">
+            <div id="charts" class="charts"></div>
+          </div>
         </section>
 
-        <section class="card">
+        <section class="card" id="healthCard">
           <div class="cardHeader">
             <div>
               <div class="h3">Health</div>
               <div class="muted">Connection state + check schedule.</div>
             </div>
+            <div class="actions" style="margin-top:0; justify-content:flex-end;">
+              <button
+                class="collapseBtn"
+                type="button"
+                data-collapse="healthCard"
+                aria-expanded="true"
+                aria-label="Collapse Health"
+                title="Collapse"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6"></path>
+                </svg>
+              </button>
+            </div>
           </div>
-          <div id="healthRows" class="healthRows"></div>
+          <div class="cardBody">
+            <div id="healthRows" class="healthRows"></div>
+          </div>
         </section>
       </div>
     </main>

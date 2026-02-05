@@ -60,6 +60,54 @@ let notifLastReadAt = 0;
 let historyAll = [];
 let notifyTab = "all";
 
+const DASH_COLLAPSE_KEY = "dashCollapsedV1";
+
+function readDashCollapsed() {
+  try {
+    const raw = localStorage.getItem(DASH_COLLAPSE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeDashCollapsed(map) {
+  try {
+    localStorage.setItem(DASH_COLLAPSE_KEY, JSON.stringify(map || {}));
+  } catch {}
+}
+
+function applyCollapsed(cardId, collapsed) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  card.classList.toggle("isCollapsed", Boolean(collapsed));
+  const btn = card.querySelector(`.collapseBtn[data-collapse="${cardId}"]`);
+  if (btn) btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+}
+
+function initDashCollapsibles() {
+  const ids = ["activityCard", "giftsCard", "chartsCard", "healthCard"];
+  const map = readDashCollapsed();
+  ids.forEach((id) => applyCollapsed(id, Boolean(map[id])));
+
+  document.querySelectorAll(".collapseBtn[data-collapse]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-collapse");
+      if (!id) return;
+      const cur = readDashCollapsed();
+      const next = !Boolean(cur[id]);
+      cur[id] = next;
+      writeDashCollapsed(cur);
+      applyCollapsed(id, next);
+
+      if (!next && id === "chartsCard") {
+        renderCharts();
+      }
+    });
+  });
+}
+
 const NOTIFY_TYPES = new Set(["live_started", "viewer_joined", "gift_sent", "rate_limited"]);
 const seenNotifIds = new Set();
 
@@ -1521,4 +1569,5 @@ setInterval(() => {
 }, 1000);
 
 load();
+initDashCollapsibles();
 

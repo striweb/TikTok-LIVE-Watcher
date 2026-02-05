@@ -962,6 +962,61 @@ input[type="number"]:focus {
   margin-top: 3px;
 }
 
+.card.isCollapsed .cardHeader {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom-color: transparent;
+}
+
+.card.isCollapsed .cardHeader::after {
+  opacity: 0;
+}
+
+.card.isCollapsed .cardBody {
+  display: none;
+}
+
+.collapseBtn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(232, 233, 239, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(232, 233, 239, 0.92);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 90ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.collapseBtn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  transition: transform 140ms ease;
+}
+
+.card.isCollapsed .collapseBtn svg {
+  transform: rotate(-90deg);
+}
+
+.collapseBtn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(232, 233, 239, 0.22);
+}
+
+.collapseBtn:active {
+  transform: translateY(1px);
+}
+
+.collapseBtn:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent2) 40%, rgba(232, 233, 239, 0.18));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent2) 18%, transparent);
+}
+
 .statusTools {
   display: grid;
   grid-template-columns: 240px 140px 180px;
