@@ -1,5 +1,4 @@
-/* Design polish overrides (v2)
-   Loaded after styles.css to avoid risky edits to the base stylesheet. */
+
 
 :root {
   --glass-shadow: 0 14px 32px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -9,7 +8,7 @@ html[data-theme="light"] {
   --glass-shadow: 0 18px 30px rgba(0, 0, 0, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
-/* Explicit Dark theme (stronger than default) */
+
 html[data-theme="dark"] {
   color-scheme: dark;
   --bg0: #07070c;
@@ -26,7 +25,7 @@ html[data-theme="dark"] {
   --glass-shadow: 0 16px 34px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* Unified Card headers */
+
 .cardHeader {
   display: flex;
   align-items: center;
@@ -67,7 +66,7 @@ html[data-theme="dark"] {
   margin-top: 3px;
 }
 
-/* Accent gradients + depth for primary cards */
+
 .card {
   border: 1px solid transparent;
   background:
@@ -86,21 +85,21 @@ html[data-theme="dark"] {
   box-shadow: var(--glass-shadow);
 }
 
-/* Typography polish */
+
 .h3 {
   font-weight: 900;
   font-size: 14px;
   letter-spacing: 0.25px;
 }
 
-/* Icon consistency */
+
 .iconBtn svg,
 .notifyIcon svg {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-/* LIVE radar micro-icon */
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -132,7 +131,7 @@ html[data-theme="dark"] {
   }
 }
 
-/* Status row severity colors */
+
 .statusRow {
   position: relative;
   overflow: hidden;
@@ -165,7 +164,7 @@ html[data-theme="dark"] {
   background: color-mix(in srgb, rgba(239, 68, 68, 0.10), rgba(255, 255, 255, 0.03));
 }
 
-/* Kanban cards polish + severity bar */
+
 .kanbanCard {
   position: relative;
   overflow: hidden;
@@ -197,7 +196,7 @@ html[data-theme="dark"] {
   --sev: rgba(239, 68, 68, 0.98);
 }
 
-/* Better empty states */
+
 .emptyState {
   position: relative;
   overflow: hidden;
@@ -220,7 +219,7 @@ html[data-theme="dark"] {
   z-index: 1;
 }
 
-/* Smoother drawer UX */
+
 .drawerHeader {
   background: color-mix(in srgb, var(--bg1) 62%, transparent);
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.10);
@@ -237,7 +236,7 @@ html[data-theme="dark"] {
   scrollbar-gutter: stable;
 }
 
-/* Density v2 */
+
 html[data-density="compact"] .cardHeader {
   margin-bottom: 8px;
   padding-bottom: 8px;

@@ -1,6 +1,6 @@
 ## TikTok LIVE Watcher — Electron app (Windows / macOS / Linux)
 
-Tray приложение (Electron), което следи TikTok LIVE статус **през `tiktok-chat-reader.zerody.one` (Zerody backend)** и показва desktop нотификации при `offline → LIVE`.
+Tray app (Electron) that monitors TikTok LIVE status **via `tiktok-chat-reader.zerody.one` (Zerody backend)** and shows desktop notifications on `offline → LIVE`.
 
 ### Features
 
@@ -15,51 +15,51 @@ Tray приложение (Electron), което следи TikTok LIVE стат
 - Themes (System / Light / Dark) + Accent colors + Density toggle
 - Maintenance: Restart / Clear cache / Factory reset
 
-### Стартиране (dev)
+### Run (dev)
 
-В папка `tiktok-live-watcher-electron`:
+In `tiktok-live-watcher-electron/`:
 
 ```bash
 npm install
 npm start
 ```
 
-> Забележка: `node_modules/` НЕ се качва в GitHub. След clone — `npm install`.
+> Note: `node_modules/` is NOT committed to GitHub. After cloning, run `npm install`.
 
-### Build / инсталационен файл (.app/.dmg за macOS)
+### Build / installers (macOS `.app` / `.dmg`)
 
-На Mac, в папка `tiktok-live-watcher-electron`:
+On macOS, in `tiktok-live-watcher-electron/`:
 
 ```bash
 npm install
 npm run dist:mac
 ```
 
-Артефактите излизат в `dist/` (обикновено `.dmg` + `.zip`/`.app`).
+Artifacts are produced in `dist/` (usually `.dmg` + `.zip`/`.app`).
 
-#### Важно (macOS Gatekeeper)
+#### macOS Gatekeeper
 
-Без Apple signing/notarization macOS може да покаже предупреждение при първо стартиране. Това е нормално за unsigned приложения.
-Ако искаш да няма предупреждения, можем да добавим подписване/нотаризация (изисква Apple Developer акаунт).
+Without Apple signing/notarization, macOS may warn on first run. This is normal for unsigned apps.
+If you want no warnings, add signing/notarization (requires an Apple Developer account).
 
-### Как се ползва
+### Usage
 
-- Приложението остава активно в tray (затваряне на прозореца го скрива).
-- Double-click на tray иконата → отваря прозореца.
-- “Провери сега” → ръчна проверка.
-- “Отвори” → отваря `obs.html` overlay линка за даден username.
+- The app stays active in the tray (closing the window hides it).
+- Double-click the tray icon to open the window.
+- “Check now” triggers a manual check.
+- “Open/Overlay” opens the `obs.html` overlay for a username.
 
-### Настройки
+### Settings
 
-- **Usernames**: CRUD списък (добави/редактирай/изтрий) → “Запази”
-- **Интервал**: 1–60 мин
-- **OBS params**: параметрите за твоя Zerody overlay URL (след `username=...&`)
-- **Auto Track All LIVE**: always-on следене на joins/gifts за всички LIVE (rotation)
+- **Usernames**: CRUD list (add/edit/delete) → Save
+- **Interval**: 1–60 minutes
+- **OBS params**: parameters for your Zerody overlay URL (after `username=...&`)
+- **Auto Track All LIVE**: always-on joins/gifts tracking for all LIVE (rotation)
 - **Gift tracking**: log + (optional) desktop notify + cooldown
 
-### Бележки / ограничения
+### Notes / limitations
 
-- Ако Zerody backend има временни проблеми или rate limit, някои users може да покажат `unknown` (reason/err се виждат в UI).
-- Нотификация се показва **само при старт на LIVE** (offline → LIVE).
-- “All LIVE” tracking е rotation (един host активен в момента), за да пазим Zerody rate limit.
+- If Zerody has issues or you hit rate limits, some users may show `unknown` (reason/error is shown in the UI).
+- The LIVE notification is shown **only on LIVE start** (offline → LIVE).
+- “All LIVE” tracking is a rotation (one host active at a time) to reduce Zerody rate limits.
 

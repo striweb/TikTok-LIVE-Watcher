@@ -3,7 +3,7 @@ let historySearch = "";
 let historyType = "all";
 let daysSearch = "";
 let daysSort = "dateDesc";
-let selectedDayKey = null; // "YYYY-MM-DD" in local time
+let selectedDayKey = null;
 
 function typePill(t) {
   if (t === "live_started") return { text: "live_started", cls: "live" };
@@ -22,7 +22,6 @@ function dayKeyLocal(ts) {
 }
 
 function formatDayTitle(dayKey) {
-  // dayKey: YYYY-MM-DD
   const [y, m, d] = String(dayKey).split("-");
   return `${d}.${m}.${y}`;
 }
@@ -50,14 +49,14 @@ function setView(mode) {
     daysView.hidden = true;
     dayDetailView.hidden = false;
     backBtn.hidden = false;
-    titleEl.textContent = `История • ${formatDayTitle(selectedDayKey)}`;
-    subEl.textContent = "Събития за избрания ден";
+    titleEl.textContent = `History • ${formatDayTitle(selectedDayKey)}`;
+    subEl.textContent = "Events for the selected day";
   } else {
     daysView.hidden = false;
     dayDetailView.hidden = true;
     backBtn.hidden = true;
-    titleEl.textContent = "История и логове";
-    subEl.textContent = "По дни • последни 2000 събития";
+    titleEl.textContent = "History & Logs";
+    subEl.textContent = "By day • last 2000 events";
   }
 }
 
@@ -77,7 +76,7 @@ function renderHistory() {
   if (!filtered.length) {
     const empty = document.createElement("div");
     empty.className = "muted";
-    empty.textContent = "Няма записи за показване.";
+    empty.textContent = "No entries to display.";
     listEl.appendChild(empty);
     return;
   }
@@ -138,7 +137,7 @@ function renderDays() {
   if (!days.length) {
     const empty = document.createElement("div");
     empty.className = "muted";
-    empty.textContent = "Няма дни за показване.";
+    empty.textContent = "No days to display.";
     grid.appendChild(empty);
     return;
   }
@@ -223,7 +222,6 @@ document.getElementById("backToDays").addEventListener("click", () => {
   selectedDayKey = null;
   historySearch = "";
   historyType = "all";
-  // reset inputs
   document.getElementById("historySearch").value = "";
   document.getElementById("historyType").value = "all";
   setView("days");

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bg">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -49,7 +49,7 @@
             <span class="dot"></span><span class="label">Cooldown</span><span class="value mono">—</span>
           </span>
         </div>
-        <button id="openNotifications" class="btn ghost notifBtn topIconBtn" title="Известия" aria-label="Известия">
+        <button id="openNotifications" class="btn ghost notifBtn topIconBtn" title="Notifications" aria-label="Notifications">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true">
             <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path>
             <path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
@@ -86,7 +86,7 @@
             <button class="menuItem" role="menuitem" data-menu="devtools">DevTools</button>
           </div>
         </div>
-        <button id="checkNow" class="btn primary">Провери сега</button>
+        <button id="checkNow" class="btn primary">Check now</button>
       </div>
     </header>
 
@@ -95,34 +95,34 @@
         <section class="card" id="statusCard">
           <div class="cardHeader">
             <div>
-              <div class="h3">Статус</div>
+              <div class="h3">Status</div>
               <div id="summary" class="summary">—</div>
               <div id="appBanner" class="banner" hidden></div>
             </div>
             <div class="statusTools">
-              <input id="statusSearch" class="input" type="text" spellcheck="false" placeholder="Търси @username…" />
+              <input id="statusSearch" class="input" type="text" spellcheck="false" placeholder="Search @username…" />
               <select id="statusFilter" class="select">
-                <option value="all">Всички</option>
+                <option value="all">All</option>
                 <option value="live">LIVE</option>
                 <option value="offline">Offline</option>
                 <option value="unknown">Unknown</option>
               </select>
               <select id="statusSort" class="select">
-                <option value="liveFirst">LIVE първо</option>
-                <option value="checkedDesc">Последна проверка</option>
-                <option value="nameAsc">Име (A→Z)</option>
+                <option value="liveFirst">LIVE first</option>
+                <option value="checkedDesc">Last check</option>
+                <option value="nameAsc">Name (A→Z)</option>
               </select>
             </div>
           </div>
           <div class="tableHeader" id="statusTableHeader">
-            <div>Профил</div>
-            <div>Статус</div>
+            <div>Profile</div>
+            <div>Status</div>
             <div>LIVE</div>
-            <div>Проверка</div>
-            <div>Увереност</div>
+            <div>Check</div>
+            <div>Confidence</div>
             <div>Room</div>
             <div>Last error</div>
-            <div class="tableActions">Действия</div>
+            <div class="tableActions">Actions</div>
           </div>
           <div id="statusList" class="statusList table"></div>
         </section>
@@ -131,11 +131,11 @@
           <div class="cardHeader">
             <div>
               <div class="h3">Activity</div>
-              <div class="muted">Последни събития (quick view).</div>
+              <div class="muted">Latest events (quick view).</div>
             </div>
             <div class="actions" style="margin-top:0;">
               <button id="openHistoryFromActivity" class="btn ghost">History</button>
-              <button id="openNotificationsFromActivity" class="btn">Известия</button>
+              <button id="openNotificationsFromActivity" class="btn">Notifications</button>
             </div>
           </div>
           <div id="activityList" class="activityList"></div>
@@ -145,7 +145,7 @@
           <div class="cardHeader">
             <div>
               <div class="h3">Gifts</div>
-              <div class="muted">Подаръци от наблюдаваните viewers (Join Tracker).</div>
+              <div class="muted">Gifts from watched viewers (Join Tracker).</div>
             </div>
             <div class="actions" style="margin-top:0;">
               <button id="openJoinTrackerFromGifts" class="btn ghost">Join Tracker</button>
@@ -159,7 +159,7 @@
           <div class="cardHeader">
             <div>
               <div class="h3">Charts</div>
-              <div class="muted">Последни 14 дни (summary).</div>
+              <div class="muted">Last 14 days (summary).</div>
             </div>
           </div>
           <div id="charts" class="charts"></div>
@@ -169,7 +169,7 @@
           <div class="cardHeader">
             <div>
               <div class="h3">Health</div>
-              <div class="muted">Състояние на връзките + график за проверки.</div>
+              <div class="muted">Connection state + check schedule.</div>
             </div>
           </div>
           <div id="healthRows" class="healthRows"></div>
@@ -181,12 +181,12 @@
     <aside id="notifyDrawer" class="drawer" hidden>
       <div class="drawerHeader">
         <div>
-          <div class="h3" style="margin:0;">Известия</div>
-          <div class="muted">Последни събития</div>
+          <div class="h3" style="margin:0;">Notifications</div>
+          <div class="muted">Latest events</div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
           <button id="markAllRead" class="btn">Mark all read</button>
-          <button id="closeNotifications" class="btn ghost">Затвори</button>
+          <button id="closeNotifications" class="btn ghost">Close</button>
         </div>
       </div>
       <div class="drawerTabs">
@@ -208,7 +208,7 @@
           <div id="detailsSub" class="muted">—</div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
-          <button id="closeDetails" class="btn ghost">Затвори</button>
+          <button id="closeDetails" class="btn ghost">Close</button>
         </div>
       </div>
       <div id="detailsBody" class="detailsBody"></div>

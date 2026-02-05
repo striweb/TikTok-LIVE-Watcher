@@ -99,7 +99,7 @@ function renderWatchUsers() {
   if (!draftWatchUsers.length) {
     const empty = document.createElement("div");
     empty.className = "muted";
-    empty.textContent = "Няма добавени потребители.";
+    empty.textContent = "No users added.";
     list.appendChild(empty);
     return;
   }
@@ -109,7 +109,7 @@ function renderWatchUsers() {
     row.className = "userItem";
     row.innerHTML = `
       <input type="text" spellcheck="false" value="${u}" data-idx="${idx}" aria-label="watch user ${idx + 1}" />
-      <button class="btn" type="button" data-remove="${idx}">Изтрий</button>
+      <button class="btn" type="button" data-remove="${idx}">Delete</button>
     `;
     list.appendChild(row);
   });
@@ -130,22 +130,22 @@ function renderTrackingState() {
   if (!el) return;
   const cooldown =
     state.cooldownUntil && Date.now() < state.cooldownUntil
-      ? `Cooldown до ${new Date(state.cooldownUntil).toLocaleTimeString()}`
+      ? `Cooldown until ${new Date(state.cooldownUntil).toLocaleTimeString()}`
       : null;
 
   if (!state.active) {
-    el.textContent = `Не следим лайф в момента${cooldown ? ` • ${cooldown}` : ""}`;
+    el.textContent = `Not tracking a live right now${cooldown ? ` • ${cooldown}` : ""}`;
     return;
   }
 
   if (state.mode === "allLive") {
-    el.textContent = `Следим всички LIVE (в момента: ${state.trackedHost ? `@${state.trackedHost}` : "—"})${
+    el.textContent = `Tracking all LIVE (current: ${state.trackedHost ? `@${state.trackedHost}` : "—"})${
       cooldown ? ` • ${cooldown}` : ""
     }`;
     return;
   }
 
-  el.textContent = `Следим: @${state.trackedHost || "—"}${cooldown ? ` • ${cooldown}` : ""}`;
+  el.textContent = `Tracking: @${state.trackedHost || "—"}${cooldown ? ` • ${cooldown}` : ""}`;
 }
 
 function renderJoinEvents() {
@@ -163,7 +163,7 @@ function renderJoinEvents() {
   if (!filtered.length) {
     const empty = document.createElement("div");
     empty.className = "muted";
-    empty.textContent = "Няма събития.";
+    empty.textContent = "No events.";
     list.appendChild(empty);
     return;
   }
@@ -175,7 +175,7 @@ function renderJoinEvents() {
       e.type === "viewer_joined" ? "live" : e.type === "gift_sent" ? "gift" : "unknown";
     row.innerHTML = `
       <div class="historyTop">
-        <div><b>${e.viewer ? `@${e.viewer}` : "—"}</b> <span class="muted">${e.host ? `в @${e.host}` : ""}</span></div>
+        <div><b>${e.viewer ? `@${e.viewer}` : "—"}</b> <span class="muted">${e.host ? `in @${e.host}` : ""}</span></div>
         <span class="pill ${pillClass}">${e.type}</span>
       </div>
       <div class="historyMeta">${formatDateTime(e.ts)}${e.error ? ` • ${String(e.error).slice(0, 220)}` : ""}</div>
@@ -220,7 +220,7 @@ document.getElementById("saveWatchUsers").addEventListener("click", async () => 
   draftWatchUsers = uniqUsernames(inline);
   const res = await window.api.setWatchUsers(draftWatchUsers);
   state.watchUsers = res?.watchUsers || draftWatchUsers;
-  setStatus("Запазено.");
+  setStatus("Saved.");
   renderWatchUsers();
 });
 
@@ -228,12 +228,12 @@ document.getElementById("startTracking").addEventListener("click", async () => {
   const host = normalizeUsername(document.getElementById("hostInput").value);
   if (!host) return;
   const res = await window.api.startJoinTracking(host);
-  if (!res?.ok) setStatus(`Неуспех: ${String(res?.error || "unknown").slice(0, 80)}`);
+  if (!res?.ok) setStatus(`Failed: ${String(res?.error || "unknown").slice(0, 80)}`);
 });
 
 document.getElementById("startAllLive").addEventListener("click", async () => {
   const res = await window.api.startJoinTrackingAllLive();
-  if (!res?.ok) setStatus(`Неуспех: ${String(res?.error || "unknown").slice(0, 80)}`);
+  if (!res?.ok) setStatus(`Failed: ${String(res?.error || "unknown").slice(0, 80)}`);
 });
 
 document.getElementById("stopTracking").addEventListener("click", async () => {
@@ -275,7 +275,6 @@ document.getElementById("toggleDevTools").addEventListener("click", async () => 
 
 window.api.onJoinTrackerUpdated((payload) => {
   state = payload || state;
-  // if watchUsers changed externally, refresh draft
   if (Array.isArray(state.watchUsers)) draftWatchUsers = uniqUsernames(state.watchUsers);
   renderAll();
 });

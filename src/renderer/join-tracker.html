@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bg">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -14,7 +14,7 @@
           <div class="logo" aria-hidden="true"></div>
           <div>
             <div class="title">Join Tracker</div>
-            <div id="jtSub" class="sub">Следи кога наблюдавани users влизат в LIVE</div>
+            <div id="jtSub" class="sub">Track when watched users join a LIVE</div>
           </div>
         </div>
       </div>
@@ -32,15 +32,15 @@
           <section class="card">
             <div class="cardHeader">
               <div>
-                <div class="h3">LIVE (host) за следене</div>
-                <div class="muted">Избери кой лайф да следим за “member joined” и “gift” или следи всички LIVE от твоя списък.</div>
+                <div class="h3">LIVE host to track</div>
+                <div class="muted">Choose which live to monitor for “member joined” and “gift”, or track all LIVE from your list.</div>
               </div>
             </div>
 
             <div class="historyFilters">
-              <input id="hostInput" class="input" type="text" spellcheck="false" placeholder="напр. ianaki82" />
+              <input id="hostInput" class="input" type="text" spellcheck="false" placeholder="e.g. ianaki82" />
               <button id="startTracking" class="btn primary">Start</button>
-              <button id="startAllLive" class="btn">Всички LIVE</button>
+              <button id="startAllLive" class="btn">All LIVE</button>
               <button id="stopTracking" class="btn ghost">Stop</button>
             </div>
             <div id="trackingState" class="hint">—</div>
@@ -49,19 +49,19 @@
           <section class="card">
             <div class="cardHeader">
               <div>
-                <div class="h3">Наблюдавани потребители (viewers)</div>
-                <div class="muted">Когато някой от тях влезе в лайфа, ще го логнем.</div>
+                <div class="h3">Watched viewers</div>
+                <div class="muted">When one of them joins the live, we will log it.</div>
               </div>
             </div>
 
             <div class="addRow">
-              <input id="newWatchUser" type="text" spellcheck="false" placeholder="напр. someviewer" />
-              <button id="addWatchUser" class="btn">Добави</button>
+              <input id="newWatchUser" type="text" spellcheck="false" placeholder="e.g. someviewer" />
+              <button id="addWatchUser" class="btn">Add</button>
             </div>
             <div id="watchUserList" class="userList"></div>
 
             <div class="actions">
-              <button id="saveWatchUsers" class="btn primary">Запази</button>
+              <button id="saveWatchUsers" class="btn primary">Save</button>
               <span id="status" class="status"></span>
             </div>
           </section>
@@ -73,13 +73,13 @@
           <section class="card">
             <div class="cardHeader">
               <div>
-                <div class="h3">Събития</div>
-                <div class="muted">Последни 5000 събития.</div>
+                <div class="h3">Events</div>
+                <div class="muted">Last 5000 events.</div>
               </div>
             </div>
 
             <div class="historyFilters">
-              <input id="joinSearch" class="input" type="text" spellcheck="false" placeholder="филтър: viewer / host…" />
+              <input id="joinSearch" class="input" type="text" spellcheck="false" placeholder="filter: viewer / host…" />
               <select id="joinType" class="select">
                 <option value="all">All</option>
                 <option value="viewer_joined">viewer_joined</option>

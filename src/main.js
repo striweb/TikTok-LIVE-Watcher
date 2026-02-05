@@ -6,8 +6,6 @@ const { dialog } = require("electron");
 const Store = require("electron-store").default;
 const { io } = require("socket.io-client");
 
-// --- Fix Windows "Unable to create cache: Access is denied" by using a dedicated writable app data dir ---
-// Must be configured before `app.whenReady()`.
 const appDataRoot =
   process.env.LOCALAPPDATA ||
   process.env.APPDATA ||
@@ -23,11 +21,9 @@ function safeRmDir(p) {
   try {
     fs.rmSync(p, { recursive: true, force: true });
   } catch {
-    // ignore
   }
 }
 
-// If we relaunched with a cache-clear flag, delete Chromium cache dirs before Electron starts using them.
 if (process.argv.includes(CLEAR_CACHE_ON_START_FLAG)) {
   safeRmDir(cacheDir);
   safeRmDir(mediaCacheDir);
@@ -41,16 +37,13 @@ try {
   fs.mkdirSync(mediaCacheDir, { recursive: true });
   fs.mkdirSync(tempDir, { recursive: true });
 } catch {
-  // ignore
 }
 
 try {
   app.setPath("userData", userDataDir);
-  // Electron/Chromium also uses the "cache" path unless overridden.
   app.setPath("cache", cacheDir);
   app.setPath("temp", tempDir);
 } catch {
-  // ignore
 }
 app.commandLine.appendSwitch("disk-cache-dir", cacheDir);
 app.commandLine.appendSwitch("media-cache-dir", mediaCacheDir);
@@ -60,7 +53,7 @@ app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 const DEFAULTS = {
   usernames: ["kkstefanov", "ianaki82", "oceanclient1"],
   intervalMinutes: 1,
-  perHostIntervals: {}, // { [username]: minutes }
+  perHostIntervals: {},
   joinNotify: true,
   joinNotifyCooldownMinutes: 10,
   autoTrackAllLive: false,
@@ -68,34 +61,26 @@ const DEFAULTS = {
   giftNotify: false,
   giftNotifyCooldownSeconds: 60,
   soundEnabled: true,
-  soundType: "chime", // "beep" | "chime" | "alert" | "custom"
+  soundType: "chime",
   soundCustomPath: "",
-  themeMode: "system", // "system" | "dark" | "light"
-  accent: "violet", // "violet" | "blue" | "teal" | "green" | "amber" | "red"
-  density: "comfortable", // "comfortable" | "compact"
-  dashboardView: "table", // "table" | "kanban"
+  themeMode: "system",
+  accent: "violet",
+  density: "comfortable",
+  dashboardView: "table",
   obsParams:
     "showLikes=1&showChats=1&showGifts=1&showFollows=1&showJoins=1&bgColor=rgb(24,23,28)&fontColor=rgb(227,229,235)&fontSize=1.3em"
 };
 
 const store = new Store({ defaults: DEFAULTS });
 
-/** @type {BrowserWindow | null} */
 let mainWindow = null;
-/** @type {Tray | null} */
 let tray = null;
-/** @type {Map<string, BrowserWindow>} */
 const chatWindows = new Map();
-/** @type {BrowserWindow | null} */
 let historyWindow = null;
-/** @type {BrowserWindow | null} */
 let settingsWindow = null;
-/** @type {BrowserWindow | null} */
 let joinTrackerWindow = null;
-/** @type {BrowserWindow | null} */
 let soundWindow = null;
 
-// Ensure single instance (prevents many electron.exe processes if started multiple times)
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
@@ -127,19 +112,15 @@ let history = store.get(HISTORY_KEY) || [];
 let watchUsers = store.get(WATCH_USERS_KEY) || [];
 let joinEvents = store.get(JOIN_EVENTS_KEY) || [];
 
-// Shared Zerody socket (prevents "too many connections" rate limits)
-/** @type {import("socket.io-client").Socket | null} */
 let zerodySocket = null;
 let zerodyConnecting = null;
 
-// Join tracker socket (kept separate from status-check socket)
-/** @type {import("socket.io-client").Socket | null} */
 let joinTrackerSocket = null;
 let joinTrackerConnecting = null;
-let joinTrackedHost = null; // host username we are currently tracking
+let joinTrackedHost = null;
 let joinTrackerActive = false;
 let joinCooldownUntil = 0;
-let joinTrackingMode = "single"; // "single" | "allLive"
+let joinTrackingMode = "single";
 let joinRotationAbortId = 0;
 let lastJoinSwitchAt = 0;
 
@@ -149,8 +130,8 @@ const JOIN_DWELL_MS = 60 * 1000;
 const STATUS_MIN_INTERVAL_WHEN_ALLLIVE_MS = 5 * 60 * 1000;
 
 let lastStatusCheckAt = 0;
-const lastJoinNotifyAt = new Map(); // key: host|viewer -> ts
-const lastGiftNotifyAt = new Map(); // key: host|viewer -> ts
+const lastJoinNotifyAt = new Map();
+const lastGiftNotifyAt = new Map();
 
 function getNotificationsState() {
   const v = Number(store.get(NOTIF_LAST_READ_AT_KEY) || 0);
@@ -177,8 +158,8 @@ function maybeNotifyViewerJoined({ host, viewer }) {
   lastJoinNotifyAt.set(key, Date.now());
 
   const n = new Notification({
-    title: `@${viewer} влезе при @${host}`,
-    body: "Натисни за отваряне на чата."
+    title: `@${viewer} joined @${host}`,
+    body: "Click to open the chat."
   });
   n.on("click", () => openChatPopup(host));
   playSound();
@@ -241,8 +222,8 @@ function maybeNotifyGiftSent({ host, viewer, giftSummary }) {
   lastGiftNotifyAt.set(key, Date.now());
 
   const n = new Notification({
-    title: `@${viewer} изпрати Gift`,
-    body: `в @${host}${giftSummary ? ` • ${giftSummary}` : ""}`
+    title: `@${viewer} sent a gift`,
+    body: `in @${host}${giftSummary ? ` • ${giftSummary}` : ""}`
   });
   n.on("click", () => openChatPopup(host));
   playSound();
@@ -289,7 +270,6 @@ function getAppStatus() {
     joinTrackingMode,
     joinTrackedHost,
     autoTrackAllLive: Boolean(settings.autoTrackAllLive),
-    // health
     isChecking,
     lastStatusCheckAt,
     nextScheduledCheckAt,
@@ -307,7 +287,6 @@ function broadcastAppStatus() {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("app-status-updated", payload);
   }
-  // also update tray icon quickly when entering/leaving cooldown
   updateTrayTitle();
 }
 
@@ -319,20 +298,16 @@ function broadcastNotificationsState() {
 
 async function clearAppCacheNow() {
   try {
-    // Chromium HTTP cache, etc.
     await session.defaultSession.clearCache();
   } catch {
-    // ignore
   }
   try {
     await session.defaultSession.clearAuthCache();
   } catch {
-    // ignore
   }
   try {
     await session.defaultSession.clearCodeCaches({});
   } catch {
-    // ignore
   }
   return { ok: true };
 }
@@ -343,11 +318,9 @@ function relaunchApp({ clearCache } = {}) {
     const args = clearCache ? [...baseArgs, CLEAR_CACHE_ON_START_FLAG] : baseArgs;
     app.relaunch({ args });
   } catch {
-    // fallback
     try {
       app.relaunch();
     } catch {
-      // ignore
     }
   }
   app.exit(0);
@@ -357,10 +330,8 @@ function factoryReset() {
   try {
     store.clear();
   } catch {
-    // ignore
   }
 
-  // Reset in-memory state immediately for current session (before restart)
   lastState = { byUser: {} };
   history = [];
   watchUsers = [];
@@ -380,7 +351,6 @@ function factoryReset() {
   broadcastNotificationsState();
   broadcastAppStatus();
 
-  // Restart and clear caches to ensure a clean slate
   relaunchApp({ clearCache: true });
 }
 
@@ -686,12 +656,11 @@ function openChatPopup(username) {
         error: `did-fail-load ${errorCode}: ${errorDesc} (${validatedURL})`
       });
       dialog.showErrorBox(
-        "Chat прозорецът не се зареди",
-        `Не успях да заредя overlay-а за @${u}.\n\n${errorDesc}\nURL: ${validatedURL}`
+        "Chat window failed to load",
+        `Could not load the overlay for @${u}.\n\n${errorDesc}\nURL: ${validatedURL}`
       );
     });
 
-    // show even if ready-to-show didn't fire (rare)
     win.webContents.once("did-finish-load", () => {
       if (!win.isDestroyed() && !win.isVisible()) win.show();
     });
@@ -725,7 +694,7 @@ function openHistoryPopup() {
     height: 720,
     minWidth: 640,
     minHeight: 520,
-    title: "История и логове",
+    title: "History & Logs",
     preload: path.join(__dirname, "preload.js")
   });
   historyWindow.loadFile(path.join(__dirname, "renderer", "history.html"));
@@ -755,7 +724,7 @@ function openSettingsPopup() {
     height: 740,
     minWidth: 720,
     minHeight: 560,
-    title: "Профили и настройки",
+    title: "Profiles & Settings",
     preload: path.join(__dirname, "preload.js")
   });
   settingsWindow.loadFile(path.join(__dirname, "renderer", "settings.html"));
@@ -893,7 +862,6 @@ function ensureJoinTrackerSocket() {
     });
   });
 
-  // Watch for "member joined" events. Zerody emits `member` with payload containing `uniqueId`.
   joinTrackerSocket.on("member", (msg) => {
     if (!joinTrackerActive) return;
     const viewer = normalizeUsername(msg?.uniqueId || msg?.uniqueID || msg?.user?.uniqueId || "");
@@ -907,7 +875,6 @@ function ensureJoinTrackerSocket() {
       viewer
     });
 
-    // Also record in global History (for notification center)
     appendHistory({
       type: "viewer_joined",
       username: joinTrackedHost,
@@ -918,7 +885,6 @@ function ensureJoinTrackerSocket() {
     maybeNotifyViewerJoined({ host: joinTrackedHost, viewer });
   });
 
-  // Gift events (sent by viewers)
   joinTrackerSocket.on("gift", (msg) => {
     if (!joinTrackerActive) return;
     const settings = getSettings();
@@ -940,7 +906,6 @@ function ensureJoinTrackerSocket() {
       error: giftSummary
     });
 
-    // Also record in global History (for notification center)
     appendHistory({
       type: "gift_sent",
       username: joinTrackedHost,
@@ -1028,7 +993,7 @@ async function startJoinTrackingAllLive() {
   appendJoinEvent({ type: "tracking_all_live_started", host: null, viewer: null });
 
   const abortId = ++joinRotationAbortId;
-  const dwellMs = JOIN_DWELL_MS; // how long to listen per host before rotating
+  const dwellMs = JOIN_DWELL_MS;
 
   (async () => {
     while (joinTrackerActive && joinTrackingMode === "allLive" && joinRotationAbortId === abortId) {
@@ -1085,7 +1050,7 @@ async function startJoinTracking(hostUsername) {
   if (!connected) return { ok: false, error: "join tracker socket not connected" };
 
   joinTrackingMode = "single";
-  joinRotationAbortId++; // stop any running rotation loop
+  joinRotationAbortId++;
   joinTrackedHost = host;
   lastJoinSwitchAt = Date.now();
   joinTrackerActive = true;
@@ -1264,21 +1229,19 @@ function notifyLiveStarted(username) {
 
   playSound();
   const n = new Notification({
-    title: `${username} е LIVE`,
-    body: "Натисни за отваряне на overlay-а."
+    title: `${username} is LIVE`,
+    body: "Click to open the overlay."
   });
   n.on("click", () => shell.openExternal(targetUrl));
   n.show();
 }
 
 async function checkUserLiveWithRetry(username) {
-  // Two retries for transient socket/proxy drops.
   const maxAttempts = 3;
   let last = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const r = await checkUserLive(username);
     last = r;
-    // If we got a decisive answer, stop.
     if (r?.ok === true && (r.isLive === true || r.isLive === false)) return r;
     if (r?.reason === "rate_limited" || isRateLimitedNow()) return r;
     if (attempt < maxAttempts) {
@@ -1293,7 +1256,7 @@ async function maybeAutoStartJoinTrackingAllLive(settings) {
   const s = settings || getSettings();
   if (!s.autoTrackAllLive) return;
   if (Date.now() < joinCooldownUntil) return;
-  if (joinTrackerActive && joinTrackingMode === "single") return; // user intentionally tracking one host
+  if (joinTrackerActive && joinTrackingMode === "single") return;
   if (joinTrackerActive && joinTrackingMode === "allLive") return;
 
   const live = getAllLiveHostsFromState();
@@ -1321,7 +1284,6 @@ async function runCheck() {
     return;
   }
 
-  // Auto-throttle Status checks while Join Tracker is in "allLive" mode to reduce Zerody rate limits.
   if (joinTrackerActive && joinTrackingMode === "allLive") {
     const now = Date.now();
     if (now - lastStatusCheckAt < STATUS_MIN_INTERVAL_WHEN_ALLLIVE_MS) {
@@ -1350,7 +1312,6 @@ async function runCheck() {
     const lastChecked = prev0.checkedAt || 0;
     const dueAt = lastChecked ? lastChecked + policyMs : 0;
 
-    // If not due yet, keep previous state but update policy metadata.
     if (lastChecked && Date.now() < dueAt) {
       next.byUser[u] = {
         ...prev0,
@@ -1361,7 +1322,6 @@ async function runCheck() {
       continue;
     }
 
-    // small gap between users to reduce backend rate-limits
     if (u !== settings.usernames[0]) await delay(350 + Math.floor(Math.random() * 220));
     const r = await checkUserLiveWithRetry(u);
     executed++;
@@ -1380,7 +1340,6 @@ async function runCheck() {
       reason: r.reason ?? null,
       error: r.error ?? null,
       lastChangeAt: isLive !== wasLive ? r.checkedAt : prev.lastChangeAt || null,
-      // "When was this profile last seen LIVE" (useful even when currently offline/unknown)
       lastLiveSeenAt: isLive ? r.checkedAt : prev.lastLiveSeenAt || null,
       lastLiveStartedAt: !wasLive && isLive ? r.checkedAt : prev.lastLiveStartedAt || null,
       lastLiveEndedAt: wasLive && r.isLive === false ? r.checkedAt : prev.lastLiveEndedAt || null,
@@ -1418,7 +1377,6 @@ async function runCheck() {
   isChecking = false;
   if (rerunQueued) {
     rerunQueued = false;
-    // run once more (e.g. user clicked "check now" while we were busy)
     await runCheck();
   }
 }
@@ -1454,12 +1412,10 @@ function updateTrayTitle() {
 }
 
 function svgDataUrl(svg) {
-  // Safe for nativeImage.createFromDataURL
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
 function trayIconSvg(color) {
-  // 24x24 circle with subtle border
   return `
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="8.5" fill="${color}" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>
@@ -1472,16 +1428,16 @@ function updateTrayIcon({ liveCount, unknownCount }) {
   if (!tray) return;
   const status = getAppStatus();
   let key = "idle";
-  let color = "#9CA3AF"; // gray
+  let color = "#9CA3AF";
   if (status?.rateLimited) {
     key = "cooldown";
-    color = "#F59E0B"; // amber
+    color = "#F59E0B";
   } else if (liveCount > 0) {
     key = "live";
-    color = "#22C55E"; // green
+    color = "#22C55E";
   } else if (unknownCount > 0) {
     key = "unknown";
-    color = "#FBBF24"; // yellow
+    color = "#FBBF24";
   }
 
   if (key === lastTrayIconKey) return;
@@ -1521,9 +1477,6 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
 
-  // Dev-friendly shortcuts (only while the app window is focused):
-  // - Ctrl+R: hard reload (ignore cache)
-  // - F12 / Ctrl+Shift+I: toggle DevTools
   mainWindow.webContents.on("before-input-event", (event, input) => {
     const key = String(input.key || "");
     const lower = key.toLowerCase();
@@ -1542,7 +1495,6 @@ function createWindow() {
     }
   });
 
-  // Persist window size/position (debounced)
   let saveTimer = null;
   const scheduleSaveBounds = () => {
     if (saveTimer) clearTimeout(saveTimer);
@@ -1556,7 +1508,6 @@ function createWindow() {
   mainWindow.on("move", scheduleSaveBounds);
 
   mainWindow.on("close", (e) => {
-    // Keep running in tray
     if (!app.isQuiting) {
       e.preventDefault();
       mainWindow.hide();
@@ -1572,12 +1523,11 @@ function createWindow() {
 }
 
 function createTray() {
-  // Start with a neutral icon; we'll update based on state.
   tray = new Tray(nativeImage.createFromDataURL(svgDataUrl(trayIconSvg("#9CA3AF"))));
 
   const menu = Menu.buildFromTemplate([
     {
-      label: "Отвори",
+      label: "Open",
       click: () => {
         if (!mainWindow) createWindow();
         mainWindow.show();
@@ -1585,7 +1535,7 @@ function createTray() {
       }
     },
     {
-      label: "Профили и настройки",
+      label: "Profiles & Settings",
       click: () => {
         openSettingsPopup();
       }
@@ -1597,9 +1547,9 @@ function createTray() {
       }
     },
     { type: "separator" },
-    { label: "Провери сега", click: () => void runCheck() },
+    { label: "Check now", click: () => void runCheck() },
     {
-      label: "История и логове",
+      label: "History & Logs",
       click: () => {
         openHistoryPopup();
       }
@@ -1637,18 +1587,18 @@ function createTray() {
       }
     },
     {
-      label: "Clear cache (без рестарт)",
+      label: "Clear cache (no restart)",
       click: () => void clearAppCacheNow()
     },
     {
-      label: "Factory reset (изтрий настройки)",
+      label: "Factory reset (delete everything)",
       click: () => {
         factoryReset();
       }
     },
     { type: "separator" },
     {
-      label: "Изход",
+      label: "Exit",
       click: () => {
         app.isQuiting = true;
         app.quit();
@@ -1741,7 +1691,6 @@ ipcMain.handle("export-history-csv", async () => {
         h.reason || "",
         (h.error || "").toString().replace(/\r?\n/g, " ")
       ];
-      // naive CSV escaping
       return row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
     });
   const csv = [header, ...lines].join("\n");
@@ -1872,7 +1821,7 @@ ipcMain.handle("export-join-events-csv", async () => {
 
 ipcMain.handle("choose-sound-file", async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
-    title: "Избери sound файл",
+    title: "Choose sound file",
     properties: ["openFile"],
     filters: [{ name: "Audio", extensions: ["wav", "mp3", "ogg", "m4a"] }]
   });
@@ -1921,7 +1870,6 @@ app.whenReady().then(async () => {
 });
 
 app.on("window-all-closed", (e) => {
-  // keep tray app alive
   e.preventDefault();
 });
 

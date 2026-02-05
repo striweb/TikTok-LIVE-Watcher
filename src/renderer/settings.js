@@ -118,7 +118,7 @@ function renderUserList() {
   if (!usernamesState.length) {
     const empty = document.createElement("div");
     empty.className = "muted";
-    empty.textContent = "Няма добавени профили.";
+    empty.textContent = "No profiles added.";
     list.appendChild(empty);
     return;
   }
@@ -131,7 +131,7 @@ function renderUserList() {
     row.innerHTML = `
       <input type="text" spellcheck="false" value="${u}" data-idx="${idx}" aria-label="username ${idx + 1}" />
       <input type="number" min="1" max="60" step="1" value="${per}" placeholder="${globalMin}" data-per-idx="${idx}" aria-label="per host minutes ${idx + 1}" style="max-width:120px;" />
-      <button class="btn" type="button" data-remove="${idx}">Изтрий</button>
+      <button class="btn" type="button" data-remove="${idx}">Delete</button>
     `;
     list.appendChild(row);
   });
@@ -184,10 +184,9 @@ async function save() {
   const globalMin = clampIntervalMinutes(document.getElementById("intervalMinutes").value);
   usernamesState.forEach((u, idx) => {
     const raw = String(perInline[idx] ?? "").trim();
-    if (!raw) return; // empty = no override
+    if (!raw) return;
     const v = Math.round(Number(raw));
     if (!Number.isFinite(v) || v < 1 || v > 60) return;
-    // Only persist override when it differs from global interval.
     if (v !== globalMin) perMap[u] = v;
   });
   perHostIntervalsState = perMap;
@@ -213,7 +212,7 @@ async function save() {
     obsParams: String(document.getElementById("obsParams").value || "").trim() || DEFAULTS.obsParams
   };
   settings = await window.api.setSettings(next);
-  setStatus("Запазено.");
+  setStatus("Saved.");
 }
 
 async function reset() {
@@ -271,14 +270,12 @@ document.getElementById("applyPreset").addEventListener("click", async () => {
   const preset = THEME_PRESETS[key];
   if (!preset) return;
 
-  // Apply to UI
   document.getElementById("themeMode").value = preset.themeMode;
   document.getElementById("accent").value = preset.accent;
   document.getElementById("density").value = preset.density;
 
-  // Save immediately
   await save();
-  setStatus("Preset приложен.");
+  setStatus("Preset applied.");
 });
 
 document.getElementById("restartApp").addEventListener("click", async () => {
@@ -286,14 +283,14 @@ document.getElementById("restartApp").addEventListener("click", async () => {
 });
 
 document.getElementById("clearCacheRestart").addEventListener("click", async () => {
-  if (!confirm("Да изчистя cache и да рестартирам приложението?")) return;
+  if (!confirm("Clear cache and restart the app?")) return;
   await window.api.restartApp({ clearCache: true });
 });
 
 document.getElementById("clearCache").addEventListener("click", async () => {
   const res = await window.api.clearCache();
-  if (res?.ok) setStatus("Cache изчистен.");
-  else setStatus("Не успях да изчистя cache.");
+  if (res?.ok) setStatus("Cache cleared.");
+  else setStatus("Could not clear cache.");
 });
 
 document.getElementById("exportConfig").addEventListener("click", async () => {
@@ -305,7 +302,7 @@ document.getElementById("exportConfig").addEventListener("click", async () => {
 document.getElementById("importConfig").addEventListener("click", async () => {
   const mode = String(document.getElementById("importMode").value || "merge");
   if (mode === "replace") {
-    const ok = confirm("Replace ще презапише настройките и списъците. Сигурен ли си?");
+    const ok = confirm("Replace will overwrite settings and lists. Are you sure?");
     if (!ok) return;
   }
   const res = await window.api.importConfigJSON({ mode });
@@ -318,12 +315,12 @@ document.getElementById("importConfig").addEventListener("click", async () => {
 
 document.getElementById("factoryReset").addEventListener("click", async () => {
   const ok1 = confirm(
-    "Factory reset ще изтрие профили, настройки, история, join tracker списъци и unread известия.\n\nПродължаваме ли?"
+    "Factory reset will delete profiles, settings, history, join tracker lists and unread state.\n\nContinue?"
   );
   if (!ok1) return;
-  const code = prompt('Напиши RESET за потвърждение:');
+  const code = prompt("Type RESET to confirm:");
   if (String(code || "").trim().toUpperCase() !== "RESET") {
-    setStatus("Отказано.");
+    setStatus("Cancelled.");
     return;
   }
   await window.api.factoryReset();

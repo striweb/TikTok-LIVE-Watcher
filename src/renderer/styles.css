@@ -17,19 +17,19 @@
   --warn: #f59e0b;
   --radius: 16px;
 
-  /* Glass tokens */
+  
   --glass-bg: rgba(255, 255, 255, 0.055);
   --glass-border: rgba(232, 233, 239, 0.14);
   --glass-shadow: 0 14px 32px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --glass-sheen-opacity: 0.55;
 }
 
-/* Ensure the HTML `hidden` attribute always wins (UA styles can be overridden by our class display rules) */
+
 [hidden] {
   display: none !important;
 }
 
-/* Theme modes */
+
 html[data-theme="light"] {
   color-scheme: light;
   --bg0: #f7f7fb;
@@ -42,14 +42,14 @@ html[data-theme="light"] {
   --border2: rgba(16, 19, 35, 0.18);
   --shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 
-  /* Glass tokens (light) */
+  
   --glass-bg: rgba(255, 255, 255, 0.78);
   --glass-border: rgba(16, 19, 35, 0.12);
   --glass-shadow: 0 18px 30px rgba(0, 0, 0, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.55);
   --glass-sheen-opacity: 0.28;
 }
 
-/* system theme = follow OS preference */
+
 html[data-theme="system"] {
   color-scheme: dark;
 }
@@ -69,7 +69,7 @@ html[data-theme="system"] {
   }
 }
 
-/* Accent presets */
+
 html[data-accent="violet"] {
   --accent: #7c3aed;
   --accent2: #22d3ee;
@@ -95,7 +95,7 @@ html[data-accent="red"] {
   --accent2: #f97316;
 }
 
-/* Density */
+
 html[data-density="compact"] .container {
   padding: 12px;
 }
@@ -154,12 +154,12 @@ html[data-density="compact"] .notifyItem {
 body {
   margin: 0;
   font: 13px/1.35 Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  /* enterprise: calmer background */
+  
   background: linear-gradient(180deg, var(--bg0), var(--bg1));
   color: var(--text);
 }
 
-/* Ambient moving blobs (subtle) */
+
 body::before,
 body::after {
   content: "";
@@ -172,7 +172,7 @@ body::after {
   transform: translateZ(0);
 }
 
-/* Hover spotlight (subtle) */
+
 
 .spotlight {
   position: relative;
@@ -579,7 +579,7 @@ input[type="number"]:focus {
   background: rgba(15, 15, 22, 0.75);
 }
 
-/* Toolbar input (same style as inputs, but without type selector dependency) */
+
 .input {
   width: 100%;
   box-sizing: border-box;
@@ -699,7 +699,7 @@ input[type="number"]:focus {
 }
 
 .pill.live {
-  /* requested: LIVE green */
+  
   border-color: rgba(34, 197, 94, 0.55);
   background: rgba(34, 197, 94, 0.10);
   color: rgba(187, 247, 208, 0.98);
@@ -718,7 +718,7 @@ input[type="number"]:focus {
 }
 
 .pill.offline {
-  /* requested: offline red */
+  
   border-color: rgba(239, 68, 68, 0.55);
   background: rgba(239, 68, 68, 0.08);
   color: rgba(254, 202, 202, 0.98);
@@ -769,7 +769,7 @@ input[type="number"]:focus {
   margin: 0 auto;
 }
 
-/* Join Tracker split layout */
+
 .split {
   display: grid;
   grid-template-columns: var(--splitLeft, 420px) 10px 1fr;
@@ -1156,7 +1156,7 @@ html[data-density="compact"] .iconBtn {
   font-size: 12px;
 }
 
-/* Drawer (notification center) */
+
 .drawerOverlay {
   position: fixed;
   inset: 0;
@@ -1852,7 +1852,7 @@ html[data-density="compact"] .iconBtn {
 }
 
 .cardTall {
-  /* Don't use full-height sticky here: it can overlap the History card below and block clicks. */
+  
 }
 
 .badges {
@@ -1906,7 +1906,7 @@ html[data-density="compact"] .iconBtn {
   color: rgba(254, 202, 202, 0.95);
 }
 
-/* Badge dot variants */
+
 .badge.ok .dot {
   background: rgba(34, 197, 94, 0.95);
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
@@ -1954,8 +1954,7 @@ html[data-density="compact"] .iconBtn {
     align-items: start;
   }
 
-  /* Keep the right column usable even with multiple cards (Status + History).
-     Instead of sticky, make the status list scrollable. */
+  
   .cardTall #statusList {
     max-height: min(52vh, 520px);
     overflow: auto;
@@ -1990,7 +1989,7 @@ html[data-density="compact"] .iconBtn {
   }
 }
 
-/* History */
+
 .daysGrid {
   margin-top: 10px;
   display: grid;
@@ -2181,7 +2180,7 @@ html[data-density="compact"] .iconBtn {
   }
 }
 
-/* Shimmer only while checking */
+
 body.checking #statusCard {
   position: relative;
 }
@@ -2211,7 +2210,7 @@ body.checking #statusCard::after {
   }
 }
 
-/* Live glow drift (Kanban) */
+
 .kanbanCard.liveCard {
   position: relative;
 }

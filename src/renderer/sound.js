@@ -3,11 +3,9 @@ let currentAudio = null;
 
 function ensureAudioContext() {
   if (!audioCtx) {
-    // WebAudio for generated tones
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
   if (audioCtx.state === "suspended") {
-    // try resume (autoplay-policy is set in main)
     audioCtx.resume().catch(() => {});
   }
   return audioCtx;
@@ -39,7 +37,6 @@ function toFileUrl(p) {
   const path = String(p || "").trim();
   if (!path) return "";
   if (path.startsWith("file://")) return path;
-  // Windows path -> file:///C:/...
   const normalized = path.replace(/\\/g, "/");
   return `file:///${encodeURI(normalized)}`;
 }
@@ -51,7 +48,6 @@ async function playCustomFile(path) {
     try {
       currentAudio.pause();
     } catch {
-      // ignore
     }
     currentAudio = null;
   }
@@ -61,7 +57,6 @@ async function playCustomFile(path) {
   try {
     await a.play();
   } catch {
-    // ignore (file missing / blocked)
   }
 }
 

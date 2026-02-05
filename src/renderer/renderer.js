@@ -58,14 +58,13 @@ let appStatus = null;
 let notifications = [];
 let notifLastReadAt = 0;
 let historyAll = [];
-let notifyTab = "all"; // all | live | joins | gifts | warn
+let notifyTab = "all";
 
 const NOTIFY_TYPES = new Set(["live_started", "viewer_joined", "gift_sent", "rate_limited"]);
 const seenNotifIds = new Set();
 
-// Kanban animation state
-const kanbanCardByUser = new Map(); // username -> HTMLElement
-const lastKanbanBucketByUser = new Map(); // username -> "live" | "offline" | "unknown"
+const kanbanCardByUser = new Map();
+const lastKanbanBucketByUser = new Map();
 
 function prefersReducedMotion() {
   try {
@@ -95,7 +94,6 @@ function animateNumberText(el, to) {
   el.dataset.num = String(target);
   const tick = (t) => {
     const p = Math.min(1, (t - t0) / dur);
-    // easeOutCubic
     const e = 1 - Math.pow(1 - p, 3);
     const v = Math.round(start + (target - start) * e);
     el.textContent = String(v);
@@ -147,7 +145,6 @@ function flashKanbanColumn(wrap, key) {
   const col = wrap.querySelector(`.kanbanCol[data-col="${key}"]`);
   if (!col) return;
   col.classList.remove("flash");
-  // trigger reflow
   void col.offsetHeight;
   col.classList.add("flash");
   setTimeout(() => col.classList.remove("flash"), 260);
@@ -179,7 +176,6 @@ function renderKanban(listEl, rows) {
   const wrap = ensureKanbanSkeleton(listEl);
   const reduce = prefersReducedMotion();
 
-  // capture first positions for FLIP
   const first = new Map();
   for (const el of wrap.querySelectorAll(".kanbanCard[data-user]")) {
     first.set(el.dataset.user, el.getBoundingClientRect());
@@ -191,7 +187,6 @@ function renderKanban(listEl, rows) {
     unknown: rows.filter((st) => st.isLive == null)
   };
 
-  // update counts
   for (const k of ["live", "offline", "unknown"]) {
     const cnt = wrap.querySelector(`[data-count="${k}"]`);
     if (cnt) cnt.textContent = String(buckets[k].length);
@@ -199,12 +194,10 @@ function renderKanban(listEl, rows) {
 
   const keep = new Set(rows.map((r) => r.username));
 
-  // move/create cards in correct order (per bucket)
   for (const k of ["live", "offline", "unknown"]) {
     const list = wrap.querySelector(`.kanbanList[data-list="${k}"]`);
     if (!list) continue;
 
-    // append in desired order (this reorders/moves existing nodes)
     for (const st of buckets[k]) {
       let card = kanbanCardByUser.get(st.username);
       const isNew = !card;
@@ -225,7 +218,6 @@ function renderKanban(listEl, rows) {
       }
       lastKanbanBucketByUser.set(st.username, nextBucket);
 
-      // animate in for new cards
       if (isNew && !reduce) {
         card.animate(
           [{ opacity: 0, transform: "translateY(6px) scale(0.98)" }, { opacity: 1, transform: "translateY(0) scale(1)" }],
@@ -234,7 +226,6 @@ function renderKanban(listEl, rows) {
       }
     }
 
-    // placeholder
     const empty = list.querySelector(".kanbanEmpty");
     const hasCards = Boolean(list.querySelector(".kanbanCard"));
     if (!hasCards && !empty) {
@@ -247,7 +238,6 @@ function renderKanban(listEl, rows) {
     }
   }
 
-  // remove stale cards (not present in rows)
   for (const [u, card] of kanbanCardByUser.entries()) {
     if (keep.has(u)) continue;
     kanbanCardByUser.delete(u);
@@ -262,7 +252,6 @@ function renderKanban(listEl, rows) {
 
   if (reduce) return;
 
-  // FLIP: animate moved cards from first -> last
   for (const [u, r0] of first.entries()) {
     const el = kanbanCardByUser.get(u);
     if (!el || !el.isConnected) continue;
@@ -278,7 +267,6 @@ function renderKanban(listEl, rows) {
 }
 
 function setStatus(msg) {
-  // Main dashboard no longer has a status label; fall back to subtitle.
   const sub = document.getElementById("subtitle");
   if (!sub) return;
   const prev = sub.textContent;
@@ -328,8 +316,6 @@ function severityClassFor(st) {
   return "sev-unknown";
 }
 
-// Profiles/settings UI moved to Settings pop-up.
-
 function renderStatus() {
   const summaryEl = document.getElementById("summary");
   const listEl = document.getElementById("statusList");
@@ -338,7 +324,6 @@ function renderStatus() {
   const headerEl = document.getElementById("statusTableHeader");
   const view = String(settings?.dashboardView || "table");
   if (headerEl) headerEl.hidden = view === "kanban";
-  // For table view we fully rerender; capture positions first so we can FLIP animate reorders.
   const reduce = prefersReducedMotion();
   const first = new Map();
   if (view !== "kanban" && !reduce) {
@@ -352,15 +337,15 @@ function renderStatus() {
     const wrap = document.createElement("div");
     wrap.className = "emptyState";
     wrap.innerHTML = `
-      <div class="emptyTitle">Няма добавени профили</div>
-      <div class="emptySub">Добави usernames от менюто (☰) → Settings.</div>
-      <button class="btn" type="button" id="emptyOpenSettings">Отвори Settings</button>
+      <div class="emptyTitle">No profiles added</div>
+      <div class="emptySub">Add usernames from the menu (☰) → Settings.</div>
+      <button class="btn" type="button" id="emptyOpenSettings">Open Settings</button>
     `;
     listEl.appendChild(wrap);
     wrap.querySelector("#emptyOpenSettings").addEventListener("click", async () => {
       await window.api.openSettingsPopup();
     });
-    if (summaryEl) summaryEl.textContent = "Добави профили за да започнем.";
+    if (summaryEl) summaryEl.textContent = "Add profiles to get started.";
     if (chipLive) chipLive.textContent = "LIVE: —";
     if (chipUnknown) chipUnknown.textContent = "Unknown: —";
     return;
@@ -380,10 +365,10 @@ function renderStatus() {
     chipUnknown.classList.toggle("warn", unknownCount > 0);
   }
   summaryEl.textContent = liveCount
-    ? `${liveCount} LIVE в момента`
+    ? `${liveCount} LIVE right now`
     : unknownCount
-      ? `Няма потвърден LIVE (има ${unknownCount} unknown)`
-      : "Няма LIVE в момента";
+      ? `No confirmed LIVE (${unknownCount} unknown)`
+      : "No LIVE right now";
 
   const q = statusSearch.trim().toLowerCase();
   const rows = usernamesState
@@ -417,8 +402,8 @@ function renderStatus() {
     const wrap = document.createElement("div");
     wrap.className = "emptyState";
     wrap.innerHTML = `
-      <div class="emptyTitle">Няма резултати</div>
-      <div class="emptySub">Провери филтрите/търсенето и опитай пак.</div>
+      <div class="emptyTitle">No results</div>
+      <div class="emptySub">Check filters/search and try again.</div>
       <div class="actions" style="margin-top:0;">
         <button class="btn" type="button" id="emptyResetFilters">Reset filters</button>
       </div>
@@ -460,7 +445,7 @@ function renderStatus() {
       <div class="mono muted">${room}</div>
       <div class="muted truncate" title="${lastErr ? String(lastErr).replace(/"/g, "&quot;") : ""}">${lastErr ? "!" : "—"}</div>
       <div class="statusActions">
-        <button class="iconBtn hasTip" type="button" data-chat="${st.username}" data-tip="Чат" aria-label="Чат">
+        <button class="iconBtn hasTip" type="button" data-chat="${st.username}" data-tip="Chat" aria-label="Chat">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
             <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
           </svg>
@@ -506,10 +491,10 @@ function renderStatus() {
       try {
         const res = await window.api.openChatPopup(u);
         if (!res?.ok) {
-          setStatus("Не успях да отворя чат прозореца (виж History за детайли).");
+          setStatus("Could not open the chat window (see History for details).");
         }
       } catch (err) {
-        setStatus(`Грешка: ${String(err?.message || err).slice(0, 80)}`);
+        setStatus(`Error: ${String(err?.message || err).slice(0, 80)}`);
       }
     });
   });
@@ -523,7 +508,6 @@ function renderStatus() {
     });
   });
 
-  // FLIP animate reorder/moves in table view
   if (!reduce && first.size) {
     for (const el of listEl.querySelectorAll(".statusRow[data-user]")) {
       const r0 = first.get(el.dataset.user);
@@ -618,14 +602,14 @@ function renderNotifications() {
   list.innerHTML = "";
   renderNotifyTabs();
   const events = getNotifyEvents(notifyTab).slice(0, 80);
-  notifications = events.slice(0, 30); // keep for markAllRead fallbacks
+  notifications = events.slice(0, 30);
 
   if (!events.length) {
     const empty = document.createElement("div");
     empty.className = "emptyState";
     empty.innerHTML = `
-      <div class="emptyTitle">Няма известия</div>
-      <div class="emptySub">Няма събития за избрания таб. Ако очакваш Joins/Gifts — пусни Join Tracker (All LIVE) или включи Auto Track All LIVE.</div>
+      <div class="emptyTitle">No notifications</div>
+      <div class="emptySub">No events for this tab. If you expect Joins/Gifts, start Join Tracker (All LIVE) or enable Auto Track All LIVE.</div>
       <div class="actions" style="margin-top:0;">
         <button class="btn ghost" type="button" id="emptyOpenHistory">History</button>
         <button class="btn" type="button" id="emptyOpenJoin">Join Tracker</button>
@@ -699,11 +683,11 @@ function renderNotifications() {
     const when = n.ts ? `${relTime(n.ts)} • ${formatTime(n.ts)}` : "—";
     const title =
       type === "live_started"
-        ? `@${n.username} започна LIVE`
+        ? `@${n.username} started LIVE`
         : type === "viewer_joined"
-          ? `@${String(n.error || "").trim()} влезе при @${n.username}`
+          ? `@${String(n.error || "").trim()} joined @${n.username}`
           : type === "gift_sent"
-            ? `Gift при @${n.username}`
+            ? `Gift in @${n.username}`
           : type === "rate_limited"
             ? `Cooldown / rate limited`
           : `${type}`;
@@ -722,13 +706,13 @@ function renderNotifications() {
     const tagCls = iconCls || "";
     const subtitle =
       type === "live_started"
-        ? "Клик: отвори overlay"
+        ? "Click: open overlay"
         : type === "viewer_joined"
-          ? "Клик: отвори чат"
+          ? "Click: open chat"
           : type === "gift_sent"
-            ? "Клик: отвори чат"
+            ? "Click: open chat"
           : type === "rate_limited"
-            ? "Клик: отвори History"
+            ? "Click: open History"
             : type;
 
     row.innerHTML = `
@@ -745,7 +729,6 @@ function renderNotifications() {
       </div>
     `;
 
-    // Pulse for truly new events (first time seen in this UI session)
     if (n?.id && !seenNotifIds.has(n.id) && !prefersReducedMotion()) {
       seenNotifIds.add(n.id);
       row.classList.add("newEvent");
@@ -843,7 +826,7 @@ function openDetails(username) {
     </div>
 
     <div class="detailsActions">
-      <button class="btn" type="button" id="detailsChat">Чат</button>
+      <button class="btn" type="button" id="detailsChat">Chat</button>
       <button class="btn" type="button" id="detailsOverlayBtn">Overlay</button>
       <button class="btn" type="button" id="detailsJoin">Join Tracker</button>
       <button class="btn ghost" type="button" id="detailsHistory">History</button>
@@ -866,7 +849,7 @@ function openDetails(username) {
                 `
               )
               .join("")
-          : `<div class="muted">Няма събития за този профил.</div>`
+          : `<div class="muted">No events for this profile.</div>`
       }
     </div>
   `;
@@ -896,8 +879,8 @@ function renderActivity() {
     const empty = document.createElement("div");
     empty.className = "emptyState";
     empty.innerHTML = `
-      <div class="emptyTitle">Няма активност</div>
-      <div class="emptySub">Събитията ще се появят при LIVE / joins / gifts / warnings.</div>
+      <div class="emptyTitle">No activity</div>
+      <div class="emptySub">Events will appear for LIVE / joins / gifts / warnings.</div>
     `;
     el.appendChild(empty);
     return;
@@ -951,8 +934,8 @@ function renderGiftsCard() {
     const empty = document.createElement("div");
     empty.className = "emptyState";
     empty.innerHTML = `
-      <div class="emptyTitle">Няма gifts</div>
-      <div class="emptySub">Ще се появят когато Join Tracker е активен и наблюдаван viewer изпрати подарък.</div>
+      <div class="emptyTitle">No gifts</div>
+      <div class="emptySub">They will appear when Join Tracker is active and a watched viewer sends a gift.</div>
     `;
     el.appendChild(empty);
     return;
@@ -1069,7 +1052,6 @@ function showChartTip({ x, y, text }) {
   tip.hidden = false;
   tip.classList.add("show");
 
-  // position with viewport clamp
   const pad = 12;
   const r = tip.getBoundingClientRect();
   let left = x + pad;
@@ -1106,7 +1088,6 @@ function setChartsActiveDate(dateKey) {
     r.classList.toggle("dim", !same);
   });
 
-  // For each svg, position crosshair to the hovered day if present
   const svgs = root.querySelectorAll("svg.chartSvg");
   svgs.forEach((svg) => {
     const rect = svg.querySelector(`rect[data-date="${CSS.escape(dateKey)}"]`);
@@ -1135,8 +1116,8 @@ function renderHealth() {
   const nextCheck = a.nextScheduledCheckAt ? formatTime(a.nextScheduledCheckAt) : "—";
   const zerody = a.zerodySocketConnected ? "connected" : "disconnected";
   const jt = a.joinTrackerSocketConnected ? "connected" : "disconnected";
-  const rl = a.rateLimited && a.rateLimitedUntil ? `до ${formatTime(a.rateLimitedUntil)}` : "—";
-  const throttle = a.statusThrottled && a.statusThrottledUntil ? `до ${formatTime(a.statusThrottledUntil)}` : "—";
+  const rl = a.rateLimited && a.rateLimitedUntil ? `until ${formatTime(a.rateLimitedUntil)}` : "—";
+  const throttle = a.statusThrottled && a.statusThrottledUntil ? `until ${formatTime(a.statusThrottledUntil)}` : "—";
   const jtMode = a.joinTrackerActive ? `${a.joinTrackingMode || "—"}${a.joinTrackedHost ? ` (@${a.joinTrackedHost})` : ""}` : "off";
   const autoAllLive = a.autoTrackAllLive ? "on" : "off";
 
@@ -1226,7 +1207,7 @@ async function load() {
     notifLastReadAt = Number(ns?.lastReadAt || 0) || 0;
   } catch (err) {
     notifLastReadAt = 0;
-    setStatus('Нужен е пълен рестарт на приложението (Exit от tray → "npm start"), за да се активират новите известия.');
+    setStatus('A full restart is required (Exit from tray → "npm start") to enable the new notifications.');
   }
   renderNotifications();
   setNotifCount(computeUnreadCount());
@@ -1244,8 +1225,8 @@ document.getElementById("checkNow").addEventListener("click", async () => {
   const prevText = btn.textContent;
   btn.classList.add("loading");
   btn.disabled = true;
-  btn.textContent = "Проверявам…";
-  subtitle.textContent = "Проверявам…";
+  btn.textContent = "Checking…";
+  subtitle.textContent = "Checking…";
   document.body.classList.add("checking");
   try {
     await window.api.runCheck();
@@ -1257,8 +1238,6 @@ document.getElementById("checkNow").addEventListener("click", async () => {
     document.body.classList.remove("checking");
   }
 });
-
-// Reload/DevTools are now in the app menu dropdown.
 
 function setAppMenuOpen(open) {
   const pop = document.getElementById("appMenu");
@@ -1311,7 +1290,7 @@ document.getElementById("appMenu").addEventListener("click", async (e) => {
     else if (key === "clearCacheRestart") await window.api.restartApp({ clearCache: true });
     else if (key === "clearCache") await window.api.clearCache();
   } catch (err) {
-    setStatus(`Грешка: ${String(err?.message || err).slice(0, 120)}`);
+    setStatus(`Error: ${String(err?.message || err).slice(0, 120)}`);
   }
 });
 
@@ -1321,7 +1300,7 @@ document.getElementById("densityComfortable").addEventListener("click", async ()
     window.__applyTheme?.(settings);
     updateDensityToggle();
   } catch (err) {
-    setStatus(`Грешка: ${String(err?.message || err).slice(0, 80)}`);
+    setStatus(`Error: ${String(err?.message || err).slice(0, 80)}`);
   }
 });
 
@@ -1331,7 +1310,7 @@ document.getElementById("densityCompact").addEventListener("click", async () => 
     window.__applyTheme?.(settings);
     updateDensityToggle();
   } catch (err) {
-    setStatus(`Грешка: ${String(err?.message || err).slice(0, 80)}`);
+    setStatus(`Error: ${String(err?.message || err).slice(0, 80)}`);
   }
 });
 
@@ -1354,12 +1333,11 @@ document.getElementById("markAllRead").addEventListener("click", async () => {
     renderNotifications();
     setNotifCount(computeUnreadCount());
   } catch (err) {
-    setStatus('Main процесът е стар (tray). Направи Exit от tray и стартирай наново, за да работи "Mark all read".');
+    setStatus('Main process is outdated (tray). Exit from tray and start again for "Mark all read" to work.');
   }
 });
 document.getElementById("closeNotifications").addEventListener("click", () => setDrawer(false));
 document.getElementById("drawerOverlay").addEventListener("click", () => setDrawer(false));
-// ESC handling moved above (also closes menu).
 
 document.getElementById("closeDetails").addEventListener("click", () => setDetailsOpen(false));
 document.getElementById("detailsOverlay").addEventListener("click", () => setDetailsOpen(false));
@@ -1405,7 +1383,6 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// Hover spotlight (delegated)
 let motionEl = null;
 let motionRaf = 0;
 document.addEventListener("pointermove", (e) => {
@@ -1440,7 +1417,6 @@ document.addEventListener("pointerout", (e) => {
   motionEl.classList.remove("isHot");
 });
 
-// Charts tooltips (delegated)
 document.getElementById("charts")?.addEventListener("mousemove", (e) => {
   const rect = e.target?.closest?.("rect[data-date][data-val]");
   if (!rect) {
@@ -1514,10 +1490,12 @@ function renderAppBanner() {
   const now = Date.now();
   const parts = [];
   if (appStatus.rateLimited && appStatus.rateLimitedUntil) {
-    parts.push(`Rate limit cooldown до ${new Date(appStatus.rateLimitedUntil).toLocaleTimeString()}`);
+    parts.push(`Rate limit cooldown until ${new Date(appStatus.rateLimitedUntil).toLocaleTimeString()}`);
   }
   if (appStatus.statusThrottled && appStatus.statusThrottledUntil) {
-    parts.push(`Status е throttled до ${new Date(appStatus.statusThrottledUntil).toLocaleTimeString()} (Join Tracker: всички LIVE)`);
+    parts.push(
+      `Status checks are throttled until ${new Date(appStatus.statusThrottledUntil).toLocaleTimeString()} (Join Tracker: All LIVE)`
+    );
   }
   if (!parts.length) {
     banner.hidden = true;

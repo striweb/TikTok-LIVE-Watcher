@@ -8,6 +8,5 @@ function applyTheme(settings) {
   document.documentElement.dataset.density = density;
 }
 
-// Expose for pages
 window.__applyTheme = applyTheme;
 
