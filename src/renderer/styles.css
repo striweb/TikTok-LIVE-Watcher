@@ -2189,6 +2189,10 @@ html[data-density="compact"] .iconBtn {
   padding-right: 4px;
 }
 
+#jtRight #joinEventList.historyList {
+  max-height: min(52vh, 520px);
+}
+
 .historyItem {
   border: 1px solid var(--border);
   border-radius: 14px;
