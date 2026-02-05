@@ -827,6 +827,9 @@ input[type="number"]:focus {
   .pageSettings .grid2 {
     grid-template-columns: 1fr;
   }
+}
+
+@media (max-width: 720px) {
   .pageSettings #userList.userList {
     grid-template-columns: 1fr;
   }
