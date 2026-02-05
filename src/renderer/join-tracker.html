@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="bg">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Join Tracker</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.v2.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbarLeft">
+        <div class="titleRow">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <div class="title">Join Tracker</div>
+            <div id="jtSub" class="sub">Следи кога наблюдавани users влизат в LIVE</div>
+          </div>
+        </div>
+      </div>
+      <div class="topbarRight">
+        <button id="exportJoinCSV" class="btn ghost">Export CSV</button>
+        <button id="clearJoinEvents" class="btn ghost">Clear</button>
+        <button id="reloadUI" class="btn ghost" title="Ctrl+R">Reload</button>
+        <button id="toggleDevTools" class="btn ghost" title="F12 / Ctrl+Shift+I">DevTools</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="split" id="jtSplit">
+        <div class="splitPane" id="jtLeft">
+          <section class="card">
+            <div class="cardHeader">
+              <div>
+                <div class="h3">LIVE (host) за следене</div>
+                <div class="muted">Избери кой лайф да следим за “member joined” и “gift” или следи всички LIVE от твоя списък.</div>
+              </div>
+            </div>
+
+            <div class="historyFilters">
+              <input id="hostInput" class="input" type="text" spellcheck="false" placeholder="напр. ianaki82" />
+              <button id="startTracking" class="btn primary">Start</button>
+              <button id="startAllLive" class="btn">Всички LIVE</button>
+              <button id="stopTracking" class="btn ghost">Stop</button>
+            </div>
+            <div id="trackingState" class="hint">—</div>
+          </section>
+
+          <section class="card">
+            <div class="cardHeader">
+              <div>
+                <div class="h3">Наблюдавани потребители (viewers)</div>
+                <div class="muted">Когато някой от тях влезе в лайфа, ще го логнем.</div>
+              </div>
+            </div>
+
+            <div class="addRow">
+              <input id="newWatchUser" type="text" spellcheck="false" placeholder="напр. someviewer" />
+              <button id="addWatchUser" class="btn">Добави</button>
+            </div>
+            <div id="watchUserList" class="userList"></div>
+
+            <div class="actions">
+              <button id="saveWatchUsers" class="btn primary">Запази</button>
+              <span id="status" class="status"></span>
+            </div>
+          </section>
+        </div>
+
+        <div class="splitDivider" id="jtDivider" aria-hidden="true"></div>
+
+        <div class="splitPane" id="jtRight">
+          <section class="card">
+            <div class="cardHeader">
+              <div>
+                <div class="h3">Събития</div>
+                <div class="muted">Последни 5000 събития.</div>
+              </div>
+            </div>
+
+            <div class="historyFilters">
+              <input id="joinSearch" class="input" type="text" spellcheck="false" placeholder="филтър: viewer / host…" />
+              <select id="joinType" class="select">
+                <option value="all">All</option>
+                <option value="viewer_joined">viewer_joined</option>
+                <option value="gift_sent">gift_sent</option>
+                <option value="tracking_started">tracking_started</option>
+                <option value="tracking_stopped">tracking_stopped</option>
+                <option value="tiktok_disconnected">tiktok_disconnected</option>
+                <option value="stream_end">stream_end</option>
+              </select>
+            </div>
+
+            <div id="joinEventList" class="historyList"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script src="./theme.js"></script>
+    <script src="./join-tracker.js"></script>
+  </body>
+</html>
+

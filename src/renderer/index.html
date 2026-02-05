@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="bg">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TikTok LIVE Watcher</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.v2.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbarLeft">
+        <div class="titleRow">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <div class="title">TikTok LIVE Watcher</div>
+            <div id="subtitle" class="sub">Zerody backend</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="topbarCenter">
+        <div class="topSearchWrap">
+          <span class="topSearchIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="M20 20l-3.5-3.5"></path>
+            </svg>
+          </span>
+          <input id="topSearch" class="topSearch" type="text" spellcheck="false" placeholder="Search profiles… (Ctrl+K)" />
+        </div>
+      </div>
+
+      <div class="topbarRight">
+        <div class="badges">
+          <span class="badge" id="chipLive" title="LIVE profiles">
+            <span class="dot"></span><span class="label">LIVE</span><span class="value mono">—</span>
+          </span>
+          <span class="badge" id="chipUnknown" title="Unknown profiles">
+            <span class="dot"></span><span class="label">Unknown</span><span class="value mono">—</span>
+          </span>
+          <span class="badge" id="chipSocket" title="Zerody socket">
+            <span class="dot"></span><span class="label">Socket</span><span class="value mono">—</span>
+          </span>
+          <span class="badge" id="chipNext" title="Next status check">
+            <span class="dot"></span><span class="label">Next</span><span class="value mono">—</span>
+          </span>
+          <span class="badge badgeWarn" id="chipCooldown" title="Rate limit cooldown" hidden>
+            <span class="dot"></span><span class="label">Cooldown</span><span class="value mono">—</span>
+          </span>
+        </div>
+        <button id="openNotifications" class="btn ghost notifBtn topIconBtn" title="Известия" aria-label="Известия">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true">
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path>
+            <path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
+          </svg>
+          <span id="notifCount" class="notifCount" hidden>0</span>
+        </button>
+        <div class="segmented" role="group" aria-label="Density">
+          <button id="densityComfortable" class="segBtn" type="button">Comfortable</button>
+          <button id="densityCompact" class="segBtn" type="button">Compact</button>
+        </div>
+        <div class="menuWrap">
+          <button id="appMenuBtn" class="btn ghost menuBtn topIconBtn" aria-haspopup="true" aria-expanded="false" title="Menu" aria-label="Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true">
+              <path d="M4 6h16"></path>
+              <path d="M4 12h16"></path>
+              <path d="M4 18h16"></path>
+            </svg>
+          </button>
+          <div id="appMenu" class="menuPopover" role="menu" hidden>
+            <div class="menuSectionTitle">Navigation</div>
+            <button class="menuItem" role="menuitem" data-menu="settings">Settings</button>
+            <button class="menuItem" role="menuitem" data-menu="history">History</button>
+            <button class="menuItem" role="menuitem" data-menu="join">Join Tracker</button>
+
+            <div class="menuDivider"></div>
+            <div class="menuSectionTitle">Maintenance</div>
+            <button class="menuItem" role="menuitem" data-menu="restart">Restart</button>
+            <button class="menuItem" role="menuitem" data-menu="clearCacheRestart">Clear cache & restart</button>
+            <button class="menuItem" role="menuitem" data-menu="clearCache">Clear cache (no restart)</button>
+
+            <div class="menuDivider"></div>
+            <div class="menuSectionTitle">Developer</div>
+            <button class="menuItem" role="menuitem" data-menu="reload">Reload UI</button>
+            <button class="menuItem" role="menuitem" data-menu="devtools">DevTools</button>
+          </div>
+        </div>
+        <button id="checkNow" class="btn primary">Провери сега</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="grid">
+        <section class="card" id="statusCard">
+          <div class="cardHeader">
+            <div>
+              <div class="h3">Статус</div>
+              <div id="summary" class="summary">—</div>
+              <div id="appBanner" class="banner" hidden></div>
+            </div>
+            <div class="statusTools">
+              <input id="statusSearch" class="input" type="text" spellcheck="false" placeholder="Търси @username…" />
+              <select id="statusFilter" class="select">
+                <option value="all">Всички</option>
+                <option value="live">LIVE</option>
+                <option value="offline">Offline</option>
+                <option value="unknown">Unknown</option>
+              </select>
+              <select id="statusSort" class="select">
+                <option value="liveFirst">LIVE първо</option>
+                <option value="checkedDesc">Последна проверка</option>
+                <option value="nameAsc">Име (A→Z)</option>
+              </select>
+            </div>
+          </div>
+          <div class="tableHeader" id="statusTableHeader">
+            <div>Профил</div>
+            <div>Статус</div>
+            <div>LIVE</div>
+            <div>Проверка</div>
+            <div>Увереност</div>
+            <div>Room</div>
+            <div>Last error</div>
+            <div class="tableActions">Действия</div>
+          </div>
+          <div id="statusList" class="statusList table"></div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">
+            <div>
+              <div class="h3">Activity</div>
+              <div class="muted">Последни събития (quick view).</div>
+            </div>
+            <div class="actions" style="margin-top:0;">
+              <button id="openHistoryFromActivity" class="btn ghost">History</button>
+              <button id="openNotificationsFromActivity" class="btn">Известия</button>
+            </div>
+          </div>
+          <div id="activityList" class="activityList"></div>
+        </section>
+
+        <section class="card" id="giftsCard">
+          <div class="cardHeader">
+            <div>
+              <div class="h3">Gifts</div>
+              <div class="muted">Подаръци от наблюдаваните viewers (Join Tracker).</div>
+            </div>
+            <div class="actions" style="margin-top:0;">
+              <button id="openJoinTrackerFromGifts" class="btn ghost">Join Tracker</button>
+              <button id="openGiftNotifications" class="btn">Gifts</button>
+            </div>
+          </div>
+          <div id="giftsList" class="activityList"></div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">
+            <div>
+              <div class="h3">Charts</div>
+              <div class="muted">Последни 14 дни (summary).</div>
+            </div>
+          </div>
+          <div id="charts" class="charts"></div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">
+            <div>
+              <div class="h3">Health</div>
+              <div class="muted">Състояние на връзките + график за проверки.</div>
+            </div>
+          </div>
+          <div id="healthRows" class="healthRows"></div>
+        </section>
+      </div>
+    </main>
+
+    <div id="drawerOverlay" class="drawerOverlay" hidden></div>
+    <aside id="notifyDrawer" class="drawer" hidden>
+      <div class="drawerHeader">
+        <div>
+          <div class="h3" style="margin:0;">Известия</div>
+          <div class="muted">Последни събития</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="markAllRead" class="btn">Mark all read</button>
+          <button id="closeNotifications" class="btn ghost">Затвори</button>
+        </div>
+      </div>
+      <div class="drawerTabs">
+        <div class="tabIndicator" aria-hidden="true"></div>
+        <button class="tabBtn" type="button" data-ntab="all">All</button>
+        <button class="tabBtn" type="button" data-ntab="live">LIVE</button>
+        <button class="tabBtn" type="button" data-ntab="joins">Joins</button>
+        <button class="tabBtn" type="button" data-ntab="gifts">Gifts</button>
+        <button class="tabBtn" type="button" data-ntab="warn">Warnings</button>
+      </div>
+      <div id="notifyList" class="notifyList"></div>
+    </aside>
+
+    <div id="detailsOverlay" class="drawerOverlay" hidden></div>
+    <aside id="detailsDrawer" class="drawer" hidden>
+      <div class="drawerHeader">
+        <div>
+          <div class="h3" style="margin:0;">Details</div>
+          <div id="detailsSub" class="muted">—</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="closeDetails" class="btn ghost">Затвори</button>
+        </div>
+      </div>
+      <div id="detailsBody" class="detailsBody"></div>
+    </aside>
+
+    <script src="./theme.js"></script>
+    <script src="./renderer.js"></script>
+  </body>
+</html>
+

@@ -1,0 +1,63 @@
+{
+  "name": "tiktok-live-watcher-electron",
+  "version": "1.0.0",
+  "description": "Electron tray app that monitors TikTok LIVE status via tiktok-chat-reader.zerody.one",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac --universal",
+    "dist:mac:intel": "electron-builder --mac --x64",
+    "dist:mac:apple": "electron-builder --mac --arm64",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "electron-store": "^11.0.2",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "electron": "^40.1.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.tiktoklivewatcher.app",
+    "productName": "TikTok LIVE Watcher",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.utilities"
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    }
+  }
+}

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="bg">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Профили и настройки</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.v2.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbarLeft">
+        <div class="titleRow">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <div class="title">Профили и настройки</div>
+            <div class="sub">Zerody backend</div>
+          </div>
+        </div>
+      </div>
+      <div class="topbarRight">
+        <button id="reloadUI" class="btn ghost" title="Ctrl+R">Reload</button>
+        <button id="toggleDevTools" class="btn ghost" title="F12 / Ctrl+Shift+I">DevTools</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="grid">
+        <div class="col">
+          <section class="card">
+            <div class="cardHeader">
+              <div>
+                <div class="h3">Профили</div>
+                <div class="muted">Добавяне, изтриване и редактиране на usernames + per-host интервал (по подразбиране = global).</div>
+              </div>
+            </div>
+
+            <div class="addRow">
+              <input id="newUsername" type="text" spellcheck="false" placeholder="напр. ianaki82" />
+              <button id="addUsername" class="btn">Добави</button>
+            </div>
+            <div id="userList" class="userList"></div>
+
+            <div class="actions">
+              <button id="save" class="btn primary">Запази</button>
+              <button id="reset" class="btn ghost">Reset</button>
+              <span id="status" class="status"></span>
+            </div>
+          </section>
+        </div>
+
+        <div class="col">
+          <section class="card">
+            <div class="cardHeader">
+              <div>
+                <div class="h3">Настройки</div>
+                <div class="muted">Интервал за проверка + параметри за Zerody overlay.</div>
+              </div>
+            </div>
+
+            <div class="grid2">
+              <div>
+                <label class="label" for="intervalMinutes">Интервал (минути)</label>
+                <input id="intervalMinutes" type="number" min="1" max="60" step="1" />
+                <div class="hint">Минимум 1 минута.</div>
+              </div>
+              <div>
+                <label class="label" for="obsParams">OBS params (след `username=...&`)</label>
+                <input id="obsParams" type="text" spellcheck="false" />
+                <div class="hint">Ползва се за “Отвори” и при клик на нотификация.</div>
+              </div>
+            </div>
+
+            <div class="grid2" style="margin-top: 12px;">
+              <div>
+                <label class="label">
+                  <input id="joinNotify" type="checkbox" />
+                  Известие когато наблюдаван viewer влезе в лайф (Join Tracker)
+                </label>
+                <div class="hint">Анти-спам: ще ограничи повторните известия за същия viewer/host.</div>
+              </div>
+              <div>
+                <label class="label" for="joinNotifyCooldownMinutes">Cooldown (минути)</label>
+                <input id="joinNotifyCooldownMinutes" type="number" min="0" max="180" step="1" />
+                <div class="hint">0 = без cooldown (не препоръчвам).</div>
+              </div>
+            </div>
+
+            <div class="grid2" style="margin-top: 12px;">
+              <div>
+                <label class="label">
+                  <input id="autoTrackAllLive" type="checkbox" />
+                  Auto Track All LIVE (always-on)
+                </label>
+                <div class="hint">Автоматично стартира “Всички LIVE” във фонов режим, когато има LIVE профили.</div>
+              </div>
+              <div></div>
+            </div>
+
+            <div class="grid2" style="margin-top: 12px;">
+              <div>
+                <label class="label">
+                  <input id="giftTrack" type="checkbox" />
+                  Следи Gifts от наблюдаваните viewers (Join Tracker)
+                </label>
+                <div class="hint">Ще записва “gift_sent” събития (кой, в кой лайф, час).</div>
+              </div>
+              <div>
+                <label class="label">
+                  <input id="giftNotify" type="checkbox" />
+                  Desktop известие при Gift (по избор)
+                </label>
+                <div class="hint">По подразбиране е изключено (може да спами при активни чатове).</div>
+              </div>
+            </div>
+
+            <div class="grid2" style="margin-top: 12px;">
+              <div>
+                <label class="label" for="giftNotifyCooldownSeconds">Gift notify cooldown (секунди)</label>
+                <input id="giftNotifyCooldownSeconds" type="number" min="0" max="3600" step="1" />
+                <div class="hint">Anti-spam за известията при gifts (0 = без cooldown).</div>
+              </div>
+              <div></div>
+            </div>
+
+            <div class="grid2" style="margin-top: 12px;">
+              <div>
+                <label class="label">
+                  <input id="soundEnabled" type="checkbox" />
+                  Звук при известие
+                </label>
+                <div class="hint">Пуска звук при LIVE start и при viewer_joined.</div>
+              </div>
+              <div>
+                <label class="label" for="soundType">Тип звук</label>
+                <select id="soundType" class="select">
+                  <option value="chime">Chime</option>
+                  <option value="alert">Alert</option>
+                  <option value="beep">System beep</option>
+                  <option value="custom">Custom file</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid2" style="margin-top: 12px;">
+              <div>
+                <label class="label" for="soundCustomPath">Custom sound файл</label>
+                <input id="soundCustomPath" type="text" spellcheck="false" placeholder="избери файл…" />
+                <div class="actions" style="margin-top: 8px;">
+                  <button id="browseSound" class="btn">Browse</button>
+                  <button id="testSound" class="btn ghost">Test</button>
+                </div>
+              </div>
+              <div></div>
+            </div>
+
+            <div class="grid2" style="margin-top: 12px;">
+              <div>
+                <label class="label" for="themeMode">Тема</label>
+                <select id="themeMode" class="select">
+                  <option value="system">System</option>
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                </select>
+              </div>
+              <div>
+                <label class="label" for="accent">Accent</label>
+                <select id="accent" class="select">
+                  <option value="violet">Violet</option>
+                  <option value="blue">Blue</option>
+                  <option value="teal">Teal</option>
+                  <option value="green">Green</option>
+                  <option value="amber">Amber</option>
+                  <option value="red">Red</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid2" style="margin-top: 12px;">
+              <div>
+                <label class="label" for="density">Density</label>
+                <select id="density" class="select">
+                  <option value="comfortable">Comfortable</option>
+                  <option value="compact">Compact</option>
+                </select>
+              </div>
+              <div>
+                <label class="label" for="themePreset">Theme preset</label>
+                <div class="actions" style="justify-content:flex-start;">
+                  <select id="themePreset" class="select">
+                    <option value="">—</option>
+                    <option value="enterpriseDark">Enterprise Dark</option>
+                    <option value="neon">Neon</option>
+                    <option value="lightClean">Light Clean</option>
+                  </select>
+                  <button id="applyPreset" class="btn">Apply</button>
+                </div>
+                <div class="hint">Ще промени Theme/Accent/Density.</div>
+              </div>
+            </div>
+
+            <div class="grid2" style="margin-top: 12px;">
+              <div>
+                <label class="label" for="dashboardView">Dashboard view</label>
+                <select id="dashboardView" class="select">
+                  <option value="table">Table</option>
+                  <option value="kanban">Kanban</option>
+                </select>
+                <div class="hint">Kanban показва профилите като колони (LIVE/Offline/Unknown).</div>
+              </div>
+              <div></div>
+            </div>
+
+            <div class="cardHeader" style="margin-top: 14px;">
+              <div>
+                <div class="h3">Maintenance</div>
+                <div class="muted">Рестарт и изчистване на cache (помага при “забили” ресурси/стари UI версии).</div>
+              </div>
+            </div>
+            <div class="actions">
+              <button id="restartApp" class="btn">Restart app</button>
+              <button id="clearCacheRestart" class="btn ghost">Clear cache & restart</button>
+              <button id="clearCache" class="btn ghost">Clear cache (без рестарт)</button>
+              <button id="factoryReset" class="btn ghost">Factory reset (изтрий всичко)</button>
+            </div>
+
+            <div class="cardHeader" style="margin-top: 14px;">
+              <div>
+                <div class="h3">Share config</div>
+                <div class="muted">Export/Import на настройки + списъци (usernames + watched viewers).</div>
+              </div>
+            </div>
+            <div class="actions">
+              <button id="exportConfig" class="btn">Export JSON</button>
+              <select id="importMode" class="select" style="max-width: 220px;">
+                <option value="merge">Import mode: Merge</option>
+                <option value="replace">Import mode: Replace</option>
+              </select>
+              <button id="importConfig" class="btn ghost">Import JSON</button>
+            </div>
+
+            <div class="actions" style="margin-top: 12px;">
+              <button id="saveSettings" class="btn primary">Запази настройки</button>
+              <span id="statusSettings" class="status"></span>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script src="./theme.js"></script>
+    <script src="./settings.js"></script>
+  </body>
+</html>
+

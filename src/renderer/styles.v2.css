@@ -1,0 +1,263 @@
+/* Design polish overrides (v2)
+   Loaded after styles.css to avoid risky edits to the base stylesheet. */
+
+:root {
+  --glass-shadow: 0 14px 32px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="light"] {
+  --glass-shadow: 0 18px 30px rgba(0, 0, 0, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+/* Explicit Dark theme (stronger than default) */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg0: #07070c;
+  --bg1: #0b0b12;
+  --panel: rgba(255, 255, 255, 0.045);
+  --panel2: rgba(255, 255, 255, 0.065);
+  --text: #eef0f8;
+  --muted: rgba(238, 240, 248, 0.70);
+  --border: rgba(238, 240, 248, 0.11);
+  --border2: rgba(238, 240, 248, 0.17);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(238, 240, 248, 0.13);
+  --glass-sheen-opacity: 0.50;
+  --glass-shadow: 0 16px 34px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Unified Card headers */
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(232, 233, 239, 0.08);
+  position: relative;
+}
+
+.cardHeader::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--accent) 40%, transparent),
+    color-mix(in srgb, var(--accent2) 40%, transparent),
+    transparent
+  );
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.cardHeader .h3 {
+  margin: 0;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.25px;
+}
+
+.cardHeader .muted {
+  margin-top: 3px;
+}
+
+/* Accent gradients + depth for primary cards */
+.card {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--glass-bg) 92%, transparent),
+      var(--glass-bg)
+    )
+    padding-box,
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent) 30%, transparent),
+      color-mix(in srgb, var(--accent2) 22%, transparent)
+    )
+    border-box;
+  box-shadow: var(--glass-shadow);
+}
+
+/* Typography polish */
+.h3 {
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.25px;
+}
+
+/* Icon consistency */
+.iconBtn svg,
+.notifyIcon svg {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* LIVE radar micro-icon */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill.live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.95);
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+  animation: liveRadar 1.4s ease-out infinite;
+}
+
+@keyframes liveRadar {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.0);
+    opacity: 0.95;
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(34, 197, 94, 0.12);
+    opacity: 0.95;
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0.0);
+    opacity: 0.85;
+  }
+}
+
+/* Status row severity colors */
+.statusRow {
+  position: relative;
+  overflow: hidden;
+}
+
+.statusRow::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--sev, rgba(232, 233, 239, 0.16));
+  opacity: 0.95;
+}
+
+.statusRow.sev-live {
+  --sev: rgba(34, 197, 94, 0.95);
+}
+.statusRow.sev-offline {
+  --sev: rgba(239, 68, 68, 0.85);
+}
+.statusRow.sev-unknown {
+  --sev: rgba(245, 158, 11, 0.9);
+}
+.statusRow.sev-error {
+  --sev: rgba(239, 68, 68, 0.98);
+  border-color: rgba(239, 68, 68, 0.22);
+  background: color-mix(in srgb, rgba(239, 68, 68, 0.10), rgba(255, 255, 255, 0.03));
+}
+
+/* Kanban cards polish + severity bar */
+.kanbanCard {
+  position: relative;
+  overflow: hidden;
+}
+
+.kanbanCard::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--sev, rgba(232, 233, 239, 0.16));
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.kanbanCard.sev-live {
+  --sev: rgba(34, 197, 94, 0.95);
+}
+.kanbanCard.sev-offline {
+  --sev: rgba(239, 68, 68, 0.85);
+}
+.kanbanCard.sev-unknown {
+  --sev: rgba(245, 158, 11, 0.9);
+}
+.kanbanCard.sev-error {
+  --sev: rgba(239, 68, 68, 0.98);
+}
+
+/* Better empty states */
+.emptyState {
+  position: relative;
+  overflow: hidden;
+}
+
+.emptyState::before {
+  content: "";
+  position: absolute;
+  inset: -40% -30%;
+  pointer-events: none;
+  background:
+    radial-gradient(520px 260px at 25% 25%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%),
+    radial-gradient(520px 260px at 80% 20%, color-mix(in srgb, var(--accent2) 14%, transparent), transparent 60%);
+  opacity: 0.55;
+  filter: blur(16px);
+}
+
+.emptyState > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Smoother drawer UX */
+.drawerHeader {
+  background: color-mix(in srgb, var(--bg1) 62%, transparent);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.10);
+}
+
+.drawerTabs {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  background: color-mix(in srgb, var(--bg1) 55%, transparent);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.10);
+}
+
+.notifyList {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+/* Density v2 */
+html[data-density="compact"] .cardHeader {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+html[data-density="compact"] .h3 {
+  font-size: 12.5px;
+}
+html[data-density="compact"] .statusTools {
+  grid-template-columns: 1fr 120px 150px;
+  gap: 8px;
+}
+html[data-density="compact"] .statusRow,
+html[data-density="compact"] .tableHeader {
+  gap: 8px;
+}
+html[data-density="compact"] .pill {
+  padding: 5px 8px;
+  font-size: 11.5px;
+}
+html[data-density="compact"] .drawerTabs {
+  padding: 8px 10px;
+  gap: 6px;
+}

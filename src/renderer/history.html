@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="bg">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>История и логове</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.v2.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbarLeft">
+        <div class="titleRow">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <div class="title" id="historyTitle">История и логове</div>
+            <div class="sub" id="historySub">По дни • последни 2000 събития</div>
+          </div>
+        </div>
+      </div>
+      <div class="topbarRight">
+        <button id="backToDays" class="btn ghost" hidden>Назад</button>
+        <button id="exportHistory" class="btn ghost">Export CSV</button>
+        <button id="clearHistory" class="btn ghost">Clear</button>
+        <button id="reloadUI" class="btn ghost" title="Ctrl+R">Reload</button>
+        <button id="toggleDevTools" class="btn ghost" title="F12 / Ctrl+Shift+I">DevTools</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <div id="daysView">
+          <div class="historyFilters">
+            <input id="daysSearch" class="input" type="text" spellcheck="false" placeholder="търси по дата (напр. 02.04) …" />
+            <select id="daysSort" class="select">
+              <option value="dateDesc">Най-нови</option>
+              <option value="errorsDesc">Най-много грешки</option>
+              <option value="eventsDesc">Най-много събития</option>
+            </select>
+          </div>
+          <div id="daysGrid" class="daysGrid"></div>
+        </div>
+
+        <div id="dayDetailView" hidden>
+          <div class="historyFilters">
+            <input id="historySearch" class="input" type="text" spellcheck="false" placeholder="филтър: username / type / error…" />
+            <select id="historyType" class="select">
+              <option value="all">All</option>
+              <option value="live_started">live_started</option>
+              <option value="viewer_joined">viewer_joined</option>
+              <option value="live_ended">live_ended</option>
+              <option value="error">error</option>
+            </select>
+          </div>
+          <div id="historyList" class="historyList"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./theme.js"></script>
+    <script src="./history.js"></script>
+  </body>
+</html>
+
