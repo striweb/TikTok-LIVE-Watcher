@@ -51,7 +51,7 @@ app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 
 const DEFAULTS = {
-  usernames: ["kkstefanov", "ianaki82", "oceanclient1"],
+  usernames: [],
   intervalMinutes: 1,
   perHostIntervals: {},
   joinNotify: true,
