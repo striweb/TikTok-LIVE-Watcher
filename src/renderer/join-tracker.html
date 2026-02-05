@@ -70,6 +70,19 @@
         <div class="splitDivider" id="jtDivider" aria-hidden="true"></div>
 
         <div class="splitPane" id="jtRight">
+          <section class="card" id="viewerAnalyticsCard">
+            <div class="cardHeader">
+              <div>
+                <div class="h3">Viewer analytics</div>
+                <div class="muted">Joins & gifts by day + top hosts.</div>
+              </div>
+              <div class="actions" style="margin-top:0; justify-content:flex-end;">
+                <select id="analyticsViewer" class="select" style="max-width: 240px;"></select>
+              </div>
+            </div>
+            <div id="viewerAnalyticsBody"></div>
+          </section>
+
           <section class="card">
             <div class="cardHeader">
               <div>
@@ -98,6 +111,7 @@
     </main>
 
     <script src="./theme.js"></script>
+    <script src="./vendor/chart.umd.min.js"></script>
     <script src="./join-tracker.js"></script>
   </body>
 </html>

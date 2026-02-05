@@ -1695,6 +1695,38 @@ html[data-density="compact"] .iconBtn {
   position: relative;
 }
 
+.analyticsHosts {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.analyticsHostRow {
+  border: 1px solid color-mix(in srgb, var(--glass-border) 85%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--glass-bg) 80%, transparent);
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  overflow: hidden;
+}
+
+.analyticsHostMeta {
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(232, 233, 239, 0.65);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.analyticsKpi {
+  font-weight: 800;
+  color: rgba(232, 233, 239, 0.92);
+}
+
 .chartBars rect {
   fill: rgba(232, 233, 239, 0.22);
   transform-box: fill-box;
