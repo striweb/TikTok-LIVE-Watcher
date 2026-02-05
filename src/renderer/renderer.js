@@ -1114,7 +1114,7 @@ function renderHealth() {
 
   const lastCheck = a.lastStatusCheckAt ? formatTime(a.lastStatusCheckAt) : "—";
   const nextCheck = a.nextScheduledCheckAt ? formatTime(a.nextScheduledCheckAt) : "—";
-  const zerody = a.zerodySocketConnected ? "connected" : "disconnected";
+  const statusSock = a.statusSocketConnected ? "connected" : "disconnected";
   const jt = a.joinTrackerSocketConnected ? "connected" : "disconnected";
   const rl = a.rateLimited && a.rateLimitedUntil ? `until ${formatTime(a.rateLimitedUntil)}` : "—";
   const throttle = a.statusThrottled && a.statusThrottledUntil ? `until ${formatTime(a.statusThrottledUntil)}` : "—";
@@ -1122,7 +1122,7 @@ function renderHealth() {
   const autoAllLive = a.autoTrackAllLive ? "on" : "off";
 
   const rows = [
-    { k: "Zerody socket", v: zerody },
+    { k: "Status socket", v: statusSock },
     { k: "JoinTracker socket", v: jt },
     { k: "Last status check", v: lastCheck },
     { k: "Next status check", v: nextCheck },
@@ -1154,7 +1154,7 @@ function renderHealthBadges() {
   if (!chipSocket || !chipNext || !chipCooldown) return;
 
   const s = appStatus || {};
-  const socketOk = Boolean(s.zerodySocketConnected);
+  const socketOk = Boolean(s.statusSocketConnected);
   chipSocket.querySelector(".value").textContent = socketOk ? "OK" : "DOWN";
   chipSocket.classList.toggle("ok", socketOk);
   chipSocket.classList.toggle("bad", !socketOk);
@@ -1234,7 +1234,7 @@ document.getElementById("checkNow").addEventListener("click", async () => {
     btn.classList.remove("loading");
     btn.disabled = false;
     btn.textContent = prevText;
-    subtitle.textContent = "Zerody backend";
+    subtitle.textContent = "Status service";
     document.body.classList.remove("checking");
   }
 });

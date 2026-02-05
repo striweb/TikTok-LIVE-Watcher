@@ -1,7 +1,7 @@
 {
   "name": "tiktok-live-watcher-electron",
   "version": "1.0.0",
-  "description": "Electron tray app that monitors TikTok LIVE status via tiktok-chat-reader.zerody.one",
+  "description": "Electron tray app that monitors TikTok LIVE status and sends desktop notifications",
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",

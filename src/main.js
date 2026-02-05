@@ -112,8 +112,8 @@ let history = store.get(HISTORY_KEY) || [];
 let watchUsers = store.get(WATCH_USERS_KEY) || [];
 let joinEvents = store.get(JOIN_EVENTS_KEY) || [];
 
-let zerodySocket = null;
-let zerodyConnecting = null;
+let statusSocket = null;
+let statusConnecting = null;
 
 let joinTrackerSocket = null;
 let joinTrackerConnecting = null;
@@ -277,7 +277,7 @@ function getAppStatus() {
     userCount: Array.isArray(settings.usernames) ? settings.usernames.length : 0,
     watchUsersCount: Array.isArray(watchUsers) ? watchUsers.length : 0,
     historyCount: Array.isArray(history) ? history.length : 0,
-    zerodySocketConnected: Boolean(zerodySocket && zerodySocket.connected),
+    statusSocketConnected: Boolean(statusSocket && statusSocket.connected),
     joinTrackerSocketConnected: Boolean(joinTrackerSocket && joinTrackerSocket.connected)
   };
 }
@@ -817,10 +817,10 @@ function delay(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-function ensureZerodySocket() {
-  if (zerodySocket) return zerodySocket;
+function ensureStatusSocket() {
+  if (statusSocket) return statusSocket;
 
-  zerodySocket = io("https://tiktok-chat-reader.zerody.one", {
+  statusSocket = io("https://tiktok-chat-reader.zerody.one", {
     transports: ["websocket"],
     reconnection: true,
     reconnectionAttempts: 5,
@@ -829,16 +829,16 @@ function ensureZerodySocket() {
     timeout: 8000
   });
 
-  zerodySocket.on("connect_error", (err) => {
+  statusSocket.on("connect_error", (err) => {
     appendHistory({
       type: "error",
       username: null,
-      reason: "zerody_connect_error",
+      reason: "service_connect_error",
       error: String(err?.message || err)
     });
   });
 
-  return zerodySocket;
+  return statusSocket;
 }
 
 function ensureJoinTrackerSocket() {
@@ -1076,12 +1076,12 @@ async function stopJoinTracking() {
   return { ok: true };
 }
 
-async function ensureZerodyConnected() {
-  const socket = ensureZerodySocket();
+async function ensureStatusConnected() {
+  const socket = ensureStatusSocket();
   if (socket.connected) return true;
-  if (zerodyConnecting) return zerodyConnecting;
+  if (statusConnecting) return statusConnecting;
 
-  zerodyConnecting = new Promise((resolve) => {
+  statusConnecting = new Promise((resolve) => {
     const t = setTimeout(() => resolve(false), 8000);
     socket.once("connect", () => {
       clearTimeout(t);
@@ -1098,17 +1098,17 @@ async function ensureZerodyConnected() {
       resolve(false);
     }
   }).finally(() => {
-    zerodyConnecting = null;
+    statusConnecting = null;
   });
 
-  return zerodyConnecting;
+  return statusConnecting;
 }
 
 async function checkUserLive(username) {
   const startedAt = Date.now();
   const timeoutMs = 12000;
 
-  const connected = await ensureZerodyConnected();
+  const connected = await ensureStatusConnected();
   if (!connected) {
     return {
       username,
@@ -1117,12 +1117,12 @@ async function checkUserLive(username) {
       ok: false,
       isLive: null,
       confidence: "low",
-      reason: "zerody_not_connected",
-      error: "Zerody socket not connected"
+      reason: "service_not_connected",
+      error: "Status service socket not connected"
     };
   }
 
-  const socket = ensureZerodySocket();
+  const socket = ensureStatusSocket();
 
   return await new Promise((resolve) => {
     let done = false;
@@ -1136,7 +1136,7 @@ async function checkUserLive(username) {
         isLive: null,
         confidence: "low",
         reason: "timeout",
-        error: `Zerody timeout (${timeoutMs}ms)`
+        error: `Service timeout (${timeoutMs}ms)`
       });
     }, timeoutMs);
 

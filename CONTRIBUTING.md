@@ -20,5 +20,5 @@ npm start
 
 ### Notes
 
-- This app uses `tiktok-chat-reader.zerody.one` as the backend for LIVE status + events.
+- This app uses a live status service for LIVE status + events.
 - Please avoid adding features that require many parallel socket connections (rate limits).

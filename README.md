@@ -1,6 +1,6 @@
 ## TikTok LIVE Watcher — Electron app (Windows / macOS / Linux)
 
-Tray app (Electron) that monitors TikTok LIVE status **via `tiktok-chat-reader.zerody.one` (Zerody backend)** and shows desktop notifications on `offline → LIVE`.
+Tray app (Electron) that monitors TikTok LIVE status via a live status service and shows desktop notifications on `offline → LIVE`.
 
 ### Features
 
@@ -53,13 +53,13 @@ If you want no warnings, add signing/notarization (requires an Apple Developer a
 
 - **Usernames**: CRUD list (add/edit/delete) → Save
 - **Interval**: 1–60 minutes
-- **OBS params**: parameters for your Zerody overlay URL (after `username=...&`)
+- **OBS params**: overlay URL parameters (after `username=...&`)
 - **Auto Track All LIVE**: always-on joins/gifts tracking for all LIVE (rotation)
 - **Gift tracking**: log + (optional) desktop notify + cooldown
 
 ### Notes / limitations
 
-- If Zerody has issues or you hit rate limits, some users may show `unknown` (reason/error is shown in the UI).
+- If the service has issues or you hit rate limits, some users may show `unknown` (reason/error is shown in the UI).
 - The LIVE notification is shown **only on LIVE start** (offline → LIVE).
-- “All LIVE” tracking is a rotation (one host active at a time) to reduce Zerody rate limits.
+- “All LIVE” tracking is a rotation (one host active at a time) to reduce rate limits.
 
