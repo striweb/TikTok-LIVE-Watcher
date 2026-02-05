@@ -70,20 +70,20 @@
           </button>
           <div id="appMenu" class="menuPopover" role="menu" hidden>
             <div class="menuSectionTitle">Navigation</div>
-            <button class="menuItem" role="menuitem" data-menu="settings">Settings</button>
-            <button class="menuItem" role="menuitem" data-menu="history">History</button>
-            <button class="menuItem" role="menuitem" data-menu="join">Join Tracker</button>
+            <button class="menuItem" role="menuitem" data-kind="nav" data-menu="settings">Settings</button>
+            <button class="menuItem" role="menuitem" data-kind="nav" data-menu="history">History</button>
+            <button class="menuItem" role="menuitem" data-kind="nav" data-menu="join">Join Tracker</button>
 
             <div class="menuDivider"></div>
             <div class="menuSectionTitle">Maintenance</div>
-            <button class="menuItem" role="menuitem" data-menu="restart">Restart</button>
-            <button class="menuItem" role="menuitem" data-menu="clearCacheRestart">Clear cache & restart</button>
-            <button class="menuItem" role="menuitem" data-menu="clearCache">Clear cache (no restart)</button>
+            <button class="menuItem" role="menuitem" data-kind="maint" data-menu="restart">Restart</button>
+            <button class="menuItem" role="menuitem" data-kind="maint" data-menu="clearCacheRestart">Clear cache & restart</button>
+            <button class="menuItem" role="menuitem" data-kind="maint" data-menu="clearCache">Clear cache (no restart)</button>
 
             <div class="menuDivider"></div>
             <div class="menuSectionTitle">Developer</div>
-            <button class="menuItem" role="menuitem" data-menu="reload">Reload UI</button>
-            <button class="menuItem" role="menuitem" data-menu="devtools">DevTools</button>
+            <button class="menuItem" role="menuitem" data-kind="dev" data-menu="reload">Reload UI</button>
+            <button class="menuItem" role="menuitem" data-kind="dev" data-menu="devtools">DevTools</button>
           </div>
         </div>
         <button id="checkNow" class="btn primary">Check now</button>
