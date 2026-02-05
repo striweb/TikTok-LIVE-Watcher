@@ -1080,21 +1080,27 @@ function renderCharts() {
         <div class="chartTitle">LIVE starts</div>
         <div class="chartTotal">Total: ${total(live)}</div>
       </div>
-      <canvas class="chartCanvas" id="chartLive"></canvas>
+      <div class="chartCanvasWrap">
+        <canvas class="chartCanvas" id="chartLive"></canvas>
+      </div>
     </div>
     <div class="chartRow">
       <div class="chartTop">
         <div class="chartTitle">Viewer joins</div>
         <div class="chartTotal">Total: ${total(joins)}</div>
       </div>
-      <canvas class="chartCanvas" id="chartJoins"></canvas>
+      <div class="chartCanvasWrap">
+        <canvas class="chartCanvas" id="chartJoins"></canvas>
+      </div>
     </div>
     <div class="chartRow">
       <div class="chartTop">
         <div class="chartTitle">Errors</div>
         <div class="chartTotal">Total: ${total(errs)}</div>
       </div>
-      <canvas class="chartCanvas" id="chartErrors"></canvas>
+      <div class="chartCanvasWrap">
+        <canvas class="chartCanvas" id="chartErrors"></canvas>
+      </div>
     </div>
   `;
 

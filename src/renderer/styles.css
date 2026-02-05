@@ -1684,10 +1684,15 @@ html[data-density="compact"] .iconBtn {
 }
 
 .chartCanvas {
-  margin-top: 8px;
   width: 100%;
-  height: 56px;
+  height: 100% !important;
   display: block;
+}
+
+.chartCanvasWrap {
+  margin-top: 8px;
+  height: 56px;
+  position: relative;
 }
 
 .chartBars rect {
