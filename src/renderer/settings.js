@@ -94,7 +94,14 @@ let perHostIntervalsState = {};
 const THEME_PRESETS = {
   enterpriseDark: { themeMode: "dark", accent: "violet", density: "comfortable" },
   neon: { themeMode: "dark", accent: "teal", density: "compact" },
-  lightClean: { themeMode: "light", accent: "blue", density: "comfortable" }
+  lightClean: { themeMode: "light", accent: "blue", density: "comfortable" },
+  midnightTeal: { themeMode: "dark", accent: "teal", density: "comfortable", dashboardView: "kanban" },
+  graphiteBlue: { themeMode: "dark", accent: "blue", density: "comfortable", dashboardView: "table" },
+  emeraldGlass: { themeMode: "dark", accent: "green", density: "comfortable", dashboardView: "kanban" },
+  amberOps: { themeMode: "dark", accent: "amber", density: "compact", dashboardView: "table" },
+  rubyAlert: { themeMode: "dark", accent: "red", density: "compact", dashboardView: "table" },
+  iceLight: { themeMode: "light", accent: "teal", density: "comfortable", dashboardView: "table" },
+  paperLight: { themeMode: "light", accent: "amber", density: "comfortable", dashboardView: "table" }
 };
 
 function setStatus(msg) {
@@ -272,6 +279,7 @@ document.getElementById("applyPreset").addEventListener("click", async () => {
   document.getElementById("themeMode").value = preset.themeMode;
   document.getElementById("accent").value = preset.accent;
   document.getElementById("density").value = preset.density;
+  if (preset.dashboardView) document.getElementById("dashboardView").value = preset.dashboardView;
 
   await save();
   setStatus("Preset applied.");
