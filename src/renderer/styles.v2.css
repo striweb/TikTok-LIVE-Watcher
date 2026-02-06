@@ -413,32 +413,16 @@ button.copyChip.copied {
   opacity: 0.85;
 }
 
-.pageDetails .policyPresets {
+.pageDetails .policyPresetsRow {
   margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
 }
 
-.pageDetails .presetBtn {
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(232, 233, 239, 0.12);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(232, 233, 239, 0.82);
-  font-weight: 900;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease, transform 90ms ease;
-}
-
-.pageDetails .presetBtn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(232, 233, 239, 0.20);
-}
-
-.pageDetails .presetBtn:active {
-  transform: translateY(1px);
+.pageDetails .policyPreset {
+  width: 100%;
 }
 
 .pageDetails .policyBtns {

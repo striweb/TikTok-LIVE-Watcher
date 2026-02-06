@@ -258,13 +258,17 @@ function render() {
                   <input id="policyOverride" class="input mono" type="number" min="1" max="60" placeholder="${globalMin}" value="${overrideText}" />
                   <span class="policyUnit mono muted">min</span>
                 </div>
-                <div class="policyPresets" aria-label="Presets">
-                  <button class="presetBtn" type="button" data-set="1">1m</button>
-                  <button class="presetBtn" type="button" data-set="2">2m</button>
-                  <button class="presetBtn" type="button" data-set="5">5m</button>
-                  <button class="presetBtn" type="button" data-set="10">10m</button>
-                  <button class="presetBtn" type="button" data-set="15">15m</button>
-                  <button class="presetBtn" type="button" data-set="30">30m</button>
+                <div class="policyPresetsRow">
+                  <label class="policyPresetLabel muted mono" for="policyPreset">Preset</label>
+                  <select id="policyPreset" class="select policyPreset" aria-label="Preset interval">
+                    <option value="">Custom…</option>
+                    <option value="1">1m</option>
+                    <option value="2">2m</option>
+                    <option value="5">5m</option>
+                    <option value="10">10m</option>
+                    <option value="15">15m</option>
+                    <option value="30">30m</option>
+                  </select>
                 </div>
               </div>
               <div class="policyBtns">
@@ -291,6 +295,7 @@ function render() {
     `;
 
     const input = policyBody.querySelector("#policyOverride");
+    const preset = policyBody.querySelector("#policyPreset");
     const saveBtn = policyBody.querySelector("#policySave");
     const clearBtn = policyBody.querySelector("#policyClear");
 
@@ -311,19 +316,26 @@ function render() {
       if (clearBtn) clearBtn.disabled = cur === 0;
     };
 
-    policyBody.querySelectorAll("button.presetBtn[data-set]").forEach((b) => {
-      b.addEventListener("click", () => {
-        const v = Math.round(Number(b.getAttribute("data-set") || 0));
-        if (!Number.isFinite(v) || v < 1 || v > 60) return;
-        if (input) {
-          input.value = String(v);
-          input.focus();
-          input.dispatchEvent(new Event("input"));
-        }
-      });
+    preset?.addEventListener("change", () => {
+      const v = Math.round(Number(preset.value || 0));
+      if (!Number.isFinite(v) || v < 1 || v > 60) return;
+      if (input) {
+        input.value = String(v);
+        input.focus();
+        input.dispatchEvent(new Event("input"));
+      }
     });
 
-    input?.addEventListener("input", () => syncPolicyButtons());
+    input?.addEventListener("input", () => {
+      // keep preset in sync (optional)
+      if (preset) {
+        const raw = String(input.value || "").trim();
+        const v = raw ? Math.round(Number(raw)) : 0;
+        const allowed = new Set([1, 2, 5, 10, 15, 30]);
+        preset.value = allowed.has(v) ? String(v) : "";
+      }
+      syncPolicyButtons();
+    });
     input?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
