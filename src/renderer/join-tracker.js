@@ -181,6 +181,35 @@ function computeViewerAnalytics(viewer, days = 14) {
   return { keys, joins, gifts, giftUnits, hostRows };
 }
 
+function computeHeatmap(viewer, days = 7, type = "all") {
+  const v = normalizeUsername(viewer);
+  const keys = lastNDaysKeys(days);
+  const dayIndex = new Map(keys.map((k, i) => [k, i]));
+  const grid = Array.from({ length: 24 }, () => Array.from({ length: days }, () => 0));
+
+  const allow = (t) => {
+    if (type === "joins") return t === "viewer_joined";
+    if (type === "gifts") return t === "gift_sent";
+    return t === "viewer_joined" || t === "gift_sent";
+  };
+
+  for (const e of state.joinEvents || []) {
+    if (!e?.ts) continue;
+    if (!allow(e.type)) continue;
+    if (normalizeUsername(e.viewer || "") !== v) continue;
+    const k = dayKey(e.ts);
+    const di = dayIndex.get(k);
+    if (di == null) continue;
+    const h = new Date(e.ts).getHours();
+    if (h < 0 || h > 23) continue;
+    grid[h][di] += 1;
+  }
+
+  let max = 0;
+  for (const row of grid) for (const x of row) max = Math.max(max, x);
+  return { keys, grid, max: Math.max(1, max) };
+}
+
 function renderViewerAnalytics() {
   const sel = document.getElementById("analyticsViewer");
   const body = document.getElementById("viewerAnalyticsBody");
@@ -213,6 +242,7 @@ function renderViewerAnalytics() {
   const sumGifts = a.gifts.reduce((x, y) => x + y, 0);
   const sumGiftUnits = a.giftUnits.reduce((x, y) => x + y, 0);
   const topHosts = a.hostRows.slice(0, 8);
+  const hm = computeHeatmap(analyticsViewer, 7, "all");
 
   body.innerHTML = `
     <div class="charts">
@@ -235,6 +265,46 @@ function renderViewerAnalytics() {
     <div class="h3" style="margin-top:12px;">Top hosts</div>
     <div class="muted" style="margin-top:2px;">Where this viewer appeared most often.</div>
     <div class="analyticsHosts" id="vaHosts"></div>
+
+    <div class="heatmapTop">
+      <div>
+        <div class="h3" style="margin-top:14px;">Heatmap</div>
+        <div class="muted" style="margin-top:2px;">Activity by hour (last 7 days).</div>
+      </div>
+      <div class="actions" style="margin-top:0; justify-content:flex-end;">
+        <select id="heatmapType" class="select" style="max-width: 160px;">
+          <option value="all">Joins + gifts</option>
+          <option value="joins">Joins</option>
+          <option value="gifts">Gifts</option>
+        </select>
+      </div>
+    </div>
+    <div class="heatmapWrap">
+      <div class="heatmapDays">
+        ${hm.keys.map((k) => `<div class="heatmapDay">${k.slice(5)}</div>`).join("")}
+      </div>
+      <div class="heatmapGrid" style="--cols:${hm.keys.length}">
+        ${hm.grid
+          .map(
+            (row, h) =>
+              row
+                .map((v) => {
+                  const a2 = v / hm.max;
+                  const title = `${String(h).padStart(2, "0")}:00 • ${v}`;
+                  return `<div class="heatCell" title="${title}" style="--a:${a2}"></div>`;
+                })
+                .join("")
+          )
+          .join("")}
+      </div>
+      <div class="heatLegend">
+        <span class="muted">Low</span>
+        <span class="heatSwatch" style="--a:0.15"></span>
+        <span class="heatSwatch" style="--a:0.45"></span>
+        <span class="heatSwatch" style="--a:0.8"></span>
+        <span class="muted">High</span>
+      </div>
+    </div>
   `;
 
   const joinColor = cssVar("--accent2", "rgba(99,102,241,0.55)");
@@ -291,6 +361,28 @@ function renderViewerAnalytics() {
       if (!host) return;
       await window.api.openChatPopup(host);
     });
+  });
+
+  document.getElementById("heatmapType")?.addEventListener("change", (e) => {
+    const t = String(e.target.value || "all");
+    const hm2 = computeHeatmap(analyticsViewer, 7, t);
+    const daysEl = body.querySelector(".heatmapDays");
+    const gridEl = body.querySelector(".heatmapGrid");
+    if (daysEl) daysEl.innerHTML = hm2.keys.map((k) => `<div class="heatmapDay">${k.slice(5)}</div>`).join("");
+    if (gridEl) {
+      gridEl.style.setProperty("--cols", String(hm2.keys.length));
+      gridEl.innerHTML = hm2.grid
+        .map((row, h) =>
+          row
+            .map((v) => {
+              const a2 = v / hm2.max;
+              const title = `${String(h).padStart(2, "0")}:00 • ${v}`;
+              return `<div class="heatCell" title="${title}" style="--a:${a2}"></div>`;
+            })
+            .join("")
+        )
+        .join("");
+    }
   });
 }
 

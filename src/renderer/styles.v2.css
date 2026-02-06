@@ -334,6 +334,200 @@ body.checking #chartsCard .cardBody::after {
 }
 
 
+.liveStrip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 2px;
+  margin-bottom: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+}
+.liveChip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--glass-bg) 82%, transparent);
+  box-shadow: var(--glass-shadow);
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+.liveChip.pinned {
+  border-color: color-mix(in srgb, var(--accent2) 34%, var(--glass-border));
+}
+.avatar.mini {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+.iconBtn.mini {
+  width: 34px;
+  height: 34px;
+}
+.liveName {
+  font-weight: 900;
+}
+.liveMeta {
+  color: var(--muted);
+}
+
+html[data-focus="1"] #activityCard,
+html[data-focus="1"] #giftsCard,
+html[data-focus="1"] #chartsCard,
+html[data-focus="1"] #healthCard,
+html[data-focus="1"] #kpiCard {
+  display: none !important;
+}
+html[data-focus="1"] .liveStrip {
+  margin-bottom: 0;
+}
+
+.toastCenter {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 60;
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: none;
+  min-width: 220px;
+  max-width: 360px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--glass-bg) 88%, rgba(0, 0, 0, 0.22));
+  box-shadow: var(--glass-shadow);
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.detailsSplit {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 12px;
+}
+@media (max-width: 680px) {
+  .detailsSplit {
+    grid-template-columns: 1fr;
+  }
+}
+.detailsRight .detailsEvents {
+  margin-top: 10px;
+}
+
+.profileText {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.spark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+  opacity: 0.9;
+}
+.sparkBar {
+  width: 4px;
+  height: calc(var(--h) * 100%);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(232, 233, 239, 0.10);
+}
+.sparkBar {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent2) calc(var(--h) * 80%), rgba(255,255,255,0.06)),
+    rgba(255, 255, 255, 0.06)
+  );
+}
+
+.emptyChecklist {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.checkItem {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.checkDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent2) 45%, rgba(255,255,255,0.10));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent2) 14%, transparent);
+  margin-top: 4px;
+}
+
+.heatmapTop {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+.heatmapWrap {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.heatmapDays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.heatmapGrid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 3px;
+}
+.heatCell {
+  height: 11px;
+  border-radius: 4px;
+  border: 1px solid rgba(232, 233, 239, 0.10);
+  background: color-mix(in srgb, var(--accent2) calc(var(--a) * 80%), rgba(255, 255, 255, 0.02));
+}
+.heatLegend {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.heatSwatch {
+  width: 18px;
+  height: 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(232, 233, 239, 0.10);
+  background: color-mix(in srgb, var(--accent2) calc(var(--a) * 80%), rgba(255, 255, 255, 0.02));
+}
+
+
 .cardHeader {
   display: flex;
   align-items: center;

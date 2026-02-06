@@ -60,6 +60,64 @@ let notifLastReadAt = 0;
 let historyAll = [];
 let notifyTab = "all";
 let watchUsersState = [];
+let joinTrackerState = null;
+
+const PINNED_KEY = "pinnedProfilesV1";
+const FOCUS_KEY = "focusModeV1";
+
+function readJsonLS(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const v = JSON.parse(raw);
+    return v ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJsonLS(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+}
+
+function pinnedSet() {
+  const arr = readJsonLS(PINNED_KEY, []);
+  return new Set(Array.isArray(arr) ? arr.map(normalizeUsername).filter(Boolean) : []);
+}
+
+function togglePinned(u) {
+  const set = pinnedSet();
+  const key = normalizeUsername(u);
+  if (!key) return;
+  if (set.has(key)) set.delete(key);
+  else set.add(key);
+  writeJsonLS(PINNED_KEY, Array.from(set));
+}
+
+function toast(msg, kind = "ok") {
+  const wrap = document.getElementById("toastCenter");
+  if (!wrap) return;
+  const el = document.createElement("div");
+  el.className = `toast ${kind}`;
+  el.textContent = String(msg || "");
+  wrap.appendChild(el);
+  setTimeout(() => el.classList.add("show"), 10);
+  setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => el.remove(), 220);
+  }, 2200);
+}
+
+function isFocusMode() {
+  return Boolean(readJsonLS(FOCUS_KEY, false));
+}
+
+function applyFocusMode(v) {
+  writeJsonLS(FOCUS_KEY, Boolean(v));
+  document.documentElement.dataset.focus = v ? "1" : "0";
+}
 
 const DASH_COLLAPSE_KEY = "dashCollapsedV1";
 
@@ -364,6 +422,29 @@ function lastLiveMini(st) {
   return { label, title, p };
 }
 
+function sparklineForUser(username, days = 7) {
+  const u = normalizeUsername(username);
+  if (!u) return "";
+  const keys = lastNDaysKeys(days);
+  const map = new Map(keys.map((k) => [k, 0]));
+  for (const e of historyAll || []) {
+    if (e?.type !== "live_started") continue;
+    if (normalizeUsername(e.username) !== u) continue;
+    const k = dayKey(e.ts);
+    if (map.has(k)) map.set(k, (map.get(k) || 0) + 1);
+  }
+  const vals = keys.map((k) => map.get(k) || 0);
+  const max = Math.max(1, ...vals);
+  const bars = vals
+    .map((v) => {
+      const h = Math.max(0.06, Math.min(1, v / max));
+      return `<span class="sparkBar" style="--h:${h}"></span>`;
+    })
+    .join("");
+  const title = `LIVE starts (last ${days} days): ${vals.join(", ")}`;
+  return `<span class="spark" title="${title.replace(/"/g, "&quot;")}">${bars}</span>`;
+}
+
 function pill(isLive) {
   if (isLive === true) return { text: "LIVE", cls: "live" };
   if (isLive === false) return { text: "offline", cls: "offline" };
@@ -416,6 +497,105 @@ function renderKPIs() {
   animateNumberText(errEl, errorsToday);
 }
 
+function renderLiveStrip() {
+  const strip = document.getElementById("liveStrip");
+  if (!strip) return;
+  const byUser = state.byUser || {};
+  const live = Object.values(byUser)
+    .filter((x) => x?.isLive === true && x?.username)
+    .map((x) => x)
+    .sort((a, b) => String(a.username).localeCompare(String(b.username)));
+
+  if (!live.length) {
+    strip.hidden = true;
+    strip.innerHTML = "";
+    return;
+  }
+
+  const pinned = pinnedSet();
+  live.sort((a, b) => {
+    const ap = pinned.has(a.username) ? 0 : 1;
+    const bp = pinned.has(b.username) ? 0 : 1;
+    if (ap !== bp) return ap - bp;
+    return String(a.username).localeCompare(String(b.username));
+  });
+
+  const np = joinTrackerState && joinTrackerState.active
+    ? (() => {
+        const mode = String(joinTrackerState.mode || "single");
+        const host = normalizeUsername(joinTrackerState.trackedHost || "");
+        const now = Date.now();
+        const last = Number(joinTrackerState.lastSwitchAt || 0);
+        const dwell = Number(joinTrackerState.dwellMs || 0);
+        const secLeft =
+          mode === "allLive" && last > 0 && dwell > 0 ? Math.max(0, Math.floor((last + dwell - now) / 1000)) : 0;
+        const mm = Math.floor(secLeft / 60);
+        const ss = secLeft % 60;
+        const countdown = mode === "allLive" ? `${mm}:${String(ss).padStart(2, "0")}` : "—";
+        const title = mode === "allLive" ? `Switch in ${countdown}` : "Tracking single host";
+        return `
+          <div class="liveChip nowPlaying" data-user="${host || ""}" title="${title.replace(/"/g, "&quot;")}">
+            <span class="pill live">TRACK</span>
+            <span class="liveName">${host ? `@${host}` : "—"}</span>
+            <span class="liveMeta mono">${mode}</span>
+            <span class="liveMeta mono">${mode === "allLive" ? countdown : ""}</span>
+            <button class="iconBtn mini hasTip" type="button" data-open-join="1" data-tip="Join Tracker" aria-label="Join Tracker">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                <circle cx="12" cy="7" r="3"></circle>
+                <path d="M5.5 21a6.5 6.5 0 0 1 13 0"></path>
+              </svg>
+            </button>
+          </div>
+        `;
+      })()
+    : "";
+
+  strip.hidden = false;
+  strip.innerHTML = np + live
+    .slice(0, 18)
+    .map((st) => {
+      const u = st.username;
+      const isPinned = pinned.has(u);
+      const viewers = Number.isFinite(Number(st.viewerCount)) ? Math.round(Number(st.viewerCount)) : null;
+      return `
+        <div class="liveChip ${isPinned ? "pinned" : ""}" data-user="${u}">
+          <span class="avatar mini" style="${avatarStyle(u)}" aria-hidden="true">${avatarLetter(u)}</span>
+          <span class="liveName">@${u}</span>
+          <span class="liveMeta mono">${formatDurationSince(st.lastChangeAt)}</span>
+          <span class="liveMeta mono">${viewers != null ? `${viewers}` : "—"}</span>
+          <button class="iconBtn mini hasTip" type="button" data-pin="${u}" data-tip="${isPinned ? "Unpin" : "Pin"}" aria-label="Pin">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+              <path d="M12 17l-5 3 1.2-5.8L4 9.6l5.9-.6L12 3l2.1 6 5.9.6-4.2 4.6L17 20z"></path>
+            </svg>
+          </button>
+        </div>
+      `;
+    })
+    .join("");
+
+  strip.querySelectorAll(".liveChip[data-user]").forEach((el) => {
+    el.addEventListener("click", () => openDetails(el.getAttribute("data-user")));
+  });
+  strip.querySelectorAll("button[data-pin]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const u = btn.getAttribute("data-pin");
+      if (!u) return;
+      togglePinned(u);
+      toast("Pinned updated.");
+      renderLiveStrip();
+      renderStatus();
+    });
+  });
+
+  strip.querySelectorAll("button[data-open-join]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await window.api.openJoinTrackerPopup(null);
+    });
+  });
+}
+
 function renderStatus() {
   const summaryEl = document.getElementById("summary");
   const listEl = document.getElementById("statusList");
@@ -438,13 +618,24 @@ function renderStatus() {
     const wrap = document.createElement("div");
     wrap.className = "emptyState";
     wrap.innerHTML = `
-      <div class="emptyTitle">No profiles added</div>
-      <div class="emptySub">Add usernames from the menu (☰) → Settings.</div>
-      <button class="btn" type="button" id="emptyOpenSettings">Open Settings</button>
+      <div class="emptyTitle">Setup checklist</div>
+      <div class="emptySub">Complete these steps to start monitoring.</div>
+      <div class="emptyChecklist">
+        <div class="checkItem"><span class="checkDot"></span><div><b>Add profiles</b><div class="muted">Add host usernames to monitor.</div></div></div>
+        <div class="checkItem"><span class="checkDot"></span><div><b>Enable tracking</b><div class="muted">Turn on Auto Track All LIVE (optional).</div></div></div>
+        <div class="checkItem"><span class="checkDot"></span><div><b>Add watched viewers</b><div class="muted">Get join/gift alerts for specific viewers.</div></div></div>
+      </div>
+      <div class="actions" style="margin-top:0;">
+        <button class="btn primary" type="button" id="emptyOpenSettings">Open Settings</button>
+        <button class="btn ghost" type="button" id="emptyOpenJoin">Join Tracker</button>
+      </div>
     `;
     listEl.appendChild(wrap);
     wrap.querySelector("#emptyOpenSettings").addEventListener("click", async () => {
       await window.api.openSettingsPopup();
+    });
+    wrap.querySelector("#emptyOpenJoin").addEventListener("click", async () => {
+      await window.api.openJoinTrackerPopup(null);
     });
     if (summaryEl) summaryEl.textContent = "Add profiles to get started.";
     if (chipLive) chipLive.textContent = "LIVE: —";
@@ -455,15 +646,18 @@ function renderStatus() {
   const byUser = state.byUser || {};
   const liveCount = Object.values(byUser).filter((x) => x?.isLive === true).length;
   const unknownCount = Object.values(byUser).filter((x) => x?.isLive == null).length;
+  const errorCount = Object.values(byUser).filter((x) => x?.ok === false).length;
   if (chipLive) {
     const v = chipLive.querySelector(".value");
     if (v) animateNumberText(v, liveCount);
     chipLive.classList.toggle("live", liveCount > 0);
+    chipLive.title = `${liveCount} LIVE profiles`;
   }
   if (chipUnknown) {
     const v = chipUnknown.querySelector(".value");
     if (v) animateNumberText(v, unknownCount);
     chipUnknown.classList.toggle("warn", unknownCount > 0);
+    chipUnknown.title = `${unknownCount} unknown profiles`;
   }
   summaryEl.textContent = liveCount
     ? `${liveCount} LIVE right now`
@@ -538,7 +732,10 @@ function renderStatus() {
     row.innerHTML = `
       <div class="profileCell">
         <span class="avatar" style="${avatarStyle(st.username)}" aria-hidden="true">${avatarLetter(st.username)}</span>
-        <b>@${st.username}</b>
+        <div class="profileText">
+          <b>@${st.username}</b>
+          ${sparklineForUser(st.username, 7)}
+        </div>
       </div>
       <div><span class="pill ${p.cls}">${p.text}</span></div>
       <div class="lastLiveCell" title="${liveMini.title.replace(/"/g, "&quot;")}">
@@ -556,6 +753,17 @@ function renderStatus() {
       </div>
       <div class="muted truncate" title="${lastErr ? String(lastErr).replace(/"/g, "&quot;") : ""}">${lastErr ? "!" : "—"}</div>
       <div class="statusActions">
+        <button class="iconBtn hasTip" type="button" data-pinrow="${st.username}" data-tip="${pinnedSet().has(st.username) ? "Unpin" : "Pin"}" aria-label="Pin">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <path d="M12 17l-5 3 1.2-5.8L4 9.6l5.9-.6L12 3l2.1 6 5.9.6-4.2 4.6L17 20z"></path>
+          </svg>
+        </button>
+        <button class="iconBtn hasTip" type="button" data-copyuser="${st.username}" data-tip="Copy @username" aria-label="Copy username">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <path d="M8 8h12v12H8z"></path>
+            <path d="M4 16H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v1"></path>
+          </svg>
+        </button>
         <button class="iconBtn hasTip" type="button" data-chat="${st.username}" data-tip="Chat" aria-label="Chat">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
             <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
@@ -606,6 +814,32 @@ function renderStatus() {
       const u = btn.getAttribute("data-open");
       if (!u) return;
       await window.api.openOverlay(u);
+    });
+  });
+
+  listEl.querySelectorAll("button[data-pinrow]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const u = btn.getAttribute("data-pinrow");
+      if (!u) return;
+      togglePinned(u);
+      toast("Pinned updated.");
+      renderLiveStrip();
+      renderStatus();
+    });
+  });
+
+  listEl.querySelectorAll("button[data-copyuser]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const u = normalizeUsername(btn.getAttribute("data-copyuser"));
+      if (!u) return;
+      try {
+        await navigator.clipboard.writeText(`@${u}`);
+        toast("Copied username.");
+      } catch {
+        setStatus("Could not copy.");
+      }
     });
   });
 
@@ -924,7 +1158,9 @@ function openDetails(username) {
   const override = Math.round(Number(perMap[u] || 0));
   const overrideText = override ? String(override) : "";
   detailsBody.innerHTML = `
-    <div class="detailsGrid">
+    <div class="detailsSplit">
+      <div class="detailsLeft">
+        <div class="detailsGrid">
       <div class="detailsCard">
         <div class="detailsKey">Status</div>
         <div class="detailsVal"><span class="pill ${p.cls}">${p.text}</span></div>
@@ -957,10 +1193,16 @@ function openDetails(username) {
         <div class="detailsVal mono">${st.roomId ? String(st.roomId) : "—"}</div>
       </div>
       <div class="detailsCard">
+        <div class="detailsKey">Viewers</div>
+        <div class="detailsVal mono">${
+          Number.isFinite(Number(st.viewerCount)) ? Math.round(Number(st.viewerCount)) : "—"
+        }</div>
+      </div>
+      <div class="detailsCard">
         <div class="detailsKey">Last error</div>
         <div class="detailsVal mono">${st.ok === false ? String(st.error || st.reason || "error").slice(0, 140) : "—"}</div>
       </div>
-    </div>
+        </div>
 
     <div class="detailsActions">
       <button class="iconBtn hasTip" type="button" id="detailsChat" data-tip="Chat" aria-label="Chat">
@@ -992,25 +1234,30 @@ function openDetails(username) {
       </button>
     </div>
 
-    <div class="h3" style="margin-top:14px;">Recent events</div>
-    <div class="detailsEvents">
-      ${
-        recent.length
-          ? recent
-              .map(
-                (e) => `
-                  <div class="activityItem" style="cursor:default;">
-                    <div class="activityTop">
-                      <div class="activityTitle">${e.type || "event"}</div>
-                      <div class="mono muted">${e.ts ? formatTime(e.ts) : "—"}</div>
-                    </div>
-                    <div class="activityMeta">${e.reason || ""} ${e.error ? `• ${String(e.error).slice(0, 160)}` : ""}</div>
-                  </div>
-                `
-              )
-              .join("")
-          : `<div class="muted">No events for this profile.</div>`
-      }
+      </div>
+
+      <div class="detailsRight">
+        <div class="h3" style="margin-top:0;">Recent events</div>
+        <div class="detailsEvents">
+          ${
+            recent.length
+              ? recent
+                  .map(
+                    (e) => `
+                      <div class="activityItem" style="cursor:default;">
+                        <div class="activityTop">
+                          <div class="activityTitle">${e.type || "event"}</div>
+                          <div class="mono muted">${e.ts ? formatTime(e.ts) : "—"}</div>
+                        </div>
+                        <div class="activityMeta">${e.reason || ""} ${e.error ? `• ${String(e.error).slice(0, 160)}` : ""}</div>
+                      </div>
+                    `
+                  )
+                  .join("")
+              : `<div class="muted">No events for this profile.</div>`
+          }
+        </div>
+      </div>
     </div>
   `;
 
@@ -1047,7 +1294,7 @@ function openDetails(username) {
     try {
       settings = await window.api.setSettings({ ...settings, perHostIntervals: nextMap });
       window.__applyTheme?.(settings);
-      setStatus("Saved.");
+      toast("Policy saved.");
       renderStatus();
       openDetails(u);
     } catch (err) {
@@ -1370,6 +1617,7 @@ function renderHealthBadges() {
   chipSocket.querySelector(".value").textContent = socketOk ? "OK" : "DOWN";
   chipSocket.classList.toggle("ok", socketOk);
   chipSocket.classList.toggle("bad", !socketOk);
+  chipSocket.title = `Status socket: ${socketOk ? "connected" : "down"}`;
 
   const now = Date.now();
   const nextAt = Number(s.nextScheduledCheckAt || 0);
@@ -1380,6 +1628,7 @@ function renderHealthBadges() {
     const ss = sec % 60;
     chipNext.querySelector(".value").textContent = `${mm}:${String(ss).padStart(2, "0")}`;
   }
+  chipNext.title = nextAt ? `Next check at ${new Date(nextAt).toLocaleTimeString()}` : "Next check unknown";
 
   const until = Number(s.rateLimitedUntil || 0);
   const inCooldown = Boolean(s.rateLimited) && until > now;
@@ -1390,6 +1639,7 @@ function renderHealthBadges() {
     const ss = sec % 60;
     chipCooldown.querySelector(".value").textContent = `${mm}:${String(ss).padStart(2, "0")}`;
     chipCooldown.classList.add("warn");
+    chipCooldown.title = `Rate limit cooldown until ${new Date(until).toLocaleTimeString()}`;
   }
 }
 
@@ -1409,15 +1659,18 @@ function updateDensityToggle() {
 async function load() {
   settings = { ...DEFAULTS, ...(await window.api.getSettings()) };
   window.__applyTheme?.(settings);
+  applyFocusMode(isFocusMode());
   usernamesState = uniqUsernames(settings.usernames);
   state = await window.api.getState();
   try {
     const jt = await window.api.getJoinTrackerState();
+    joinTrackerState = jt || null;
     watchUsersState = uniqUsernames(jt?.watchUsers || []);
   } catch {
     watchUsersState = [];
   }
   renderStatus();
+  renderLiveStrip();
   const h = await window.api.getHistory();
   historyAll = Array.isArray(h) ? h : [];
   try {
@@ -1491,6 +1744,14 @@ document.addEventListener("keydown", (e) => {
     setDrawer(false);
     setDetailsOpen(false);
   }
+  if (!e.ctrlKey && !e.metaKey && !e.altKey && String(e.key || "").toLowerCase() === "f") {
+    const el = document.getElementById("toggleFocus");
+    if (document.activeElement && ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
+    e.preventDefault();
+    applyFocusMode(!isFocusMode());
+    toast(isFocusMode() ? "Focus mode: ON" : "Focus mode: OFF");
+    el?.blur?.();
+  }
 });
 
 document.getElementById("appMenu").addEventListener("click", async (e) => {
@@ -1503,6 +1764,7 @@ document.getElementById("appMenu").addEventListener("click", async (e) => {
     if (key === "settings") await window.api.openSettingsPopup();
     else if (key === "history") await window.api.openHistoryPopup();
     else if (key === "join") await window.api.openJoinTrackerPopup(null);
+    else if (key === "focus") applyFocusMode(!isFocusMode());
     else if (key === "reload") await window.api.reloadUI();
     else if (key === "devtools") await window.api.toggleDevTools();
     else if (key === "restart") await window.api.restartApp({ clearCache: false });
@@ -1531,6 +1793,11 @@ document.getElementById("densityCompact").addEventListener("click", async () => 
   } catch (err) {
     setStatus(`Error: ${String(err?.message || err).slice(0, 80)}`);
   }
+});
+
+document.getElementById("toggleFocus")?.addEventListener("click", () => {
+  applyFocusMode(!isFocusMode());
+  toast(isFocusMode() ? "Focus mode: ON" : "Focus mode: OFF");
 });
 
 document.getElementById("openNotifications").addEventListener("click", () => {
@@ -1755,6 +2022,7 @@ window.api.onStateUpdated((s) => {
   renderStatus();
   renderHealth();
   renderHealthBadges();
+  renderLiveStrip();
 });
 
 window.api.onSettingsUpdated((s) => {
@@ -1774,6 +2042,14 @@ window.api.onHistoryUpdated((h) => {
   renderActivity();
   renderGiftsCard();
   renderCharts();
+  renderKPIs();
+});
+
+window.api.onJoinTrackerUpdated((payload) => {
+  joinTrackerState = payload || joinTrackerState;
+  if (Array.isArray(payload?.watchUsers)) watchUsersState = uniqUsernames(payload.watchUsers);
+  renderKPIs();
+  renderLiveStrip();
 });
 
 window.api.onNotificationsStateUpdated((s) => {

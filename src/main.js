@@ -828,7 +828,10 @@ function broadcastJoinTracker() {
     trackedHost: joinTrackedHost,
     active: joinTrackerActive,
     cooldownUntil: joinCooldownUntil,
-    mode: joinTrackingMode
+    mode: joinTrackingMode,
+    lastSwitchAt: lastJoinSwitchAt,
+    dwellMs: JOIN_DWELL_MS,
+    switchMinMs: JOIN_SWITCH_MIN_INTERVAL_MS
   };
   if (joinTrackerWindow && !joinTrackerWindow.isDestroyed()) {
     joinTrackerWindow.webContents.send("join-tracker-updated", payload);
@@ -1146,6 +1149,26 @@ async function checkUserLive(username) {
 
   const socket = ensureStatusSocket();
 
+  const extractViewerCount = (state) => {
+    try {
+      const candidates = [
+        state?.roomUserCount,
+        state?.viewerCount,
+        state?.viewers,
+        state?.viewer_count,
+        state?.roomInfo?.userCount,
+        state?.roomInfo?.viewerCount,
+        state?.stats?.viewerCount,
+        state?.stats?.viewers
+      ];
+      for (const c of candidates) {
+        const n = Number(c);
+        if (Number.isFinite(n) && n >= 0) return Math.round(n);
+      }
+    } catch {}
+    return null;
+  };
+
   return await new Promise((resolve) => {
     let done = false;
     let armed = false;
@@ -1183,6 +1206,7 @@ async function checkUserLive(username) {
         isLive: true,
         confidence: "high",
         roomId: state?.roomId ?? null,
+        viewerCount: extractViewerCount(state),
         reason: null,
         error: null
       });
@@ -1364,6 +1388,10 @@ async function runCheck() {
       checkedAt: r.checkedAt,
       durationMs: r.durationMs,
       roomId: r.roomId ?? null,
+      viewerCount:
+        Number.isFinite(Number(r.viewerCount)) && Number(r.viewerCount) >= 0
+          ? Math.round(Number(r.viewerCount))
+          : prev.viewerCount ?? null,
       reason: r.reason ?? null,
       error: r.error ?? null,
       lastChangeAt: isLive !== wasLive ? r.checkedAt : prev.lastChangeAt || null,
@@ -1803,7 +1831,10 @@ ipcMain.handle("get-join-tracker-state", () => ({
   trackedHost: joinTrackedHost,
   active: joinTrackerActive,
   cooldownUntil: joinCooldownUntil,
-  mode: joinTrackingMode
+  mode: joinTrackingMode,
+  lastSwitchAt: lastJoinSwitchAt,
+  dwellMs: JOIN_DWELL_MS,
+  switchMinMs: JOIN_SWITCH_MIN_INTERVAL_MS
 }));
 
 ipcMain.handle("set-watch-users", (_e, next) => ({ ok: true, watchUsers: saveWatchUsers(next) }));

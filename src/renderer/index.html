@@ -68,6 +68,16 @@
           <button id="densityComfortable" class="segBtn" type="button">Comfortable</button>
           <button id="densityCompact" class="segBtn" type="button">Compact</button>
         </div>
+        <button id="toggleFocus" class="btn ghost topIconBtn" title="Focus mode (F)" aria-label="Focus mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true">
+            <path d="M7 3H3v4"></path>
+            <path d="M17 3h4v4"></path>
+            <path d="M21 17v4h-4"></path>
+            <path d="M3 17v4h4"></path>
+            <path d="M9 12h6"></path>
+            <path d="M12 9v6"></path>
+          </svg>
+        </button>
         <div class="menuWrap">
           <button id="appMenuBtn" class="btn ghost menuBtn topIconBtn" aria-haspopup="true" aria-expanded="false" title="Menu" aria-label="Menu">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true">
@@ -81,6 +91,7 @@
             <button class="menuItem" role="menuitem" data-kind="nav" data-menu="settings">Settings</button>
             <button class="menuItem" role="menuitem" data-kind="nav" data-menu="history">History</button>
             <button class="menuItem" role="menuitem" data-kind="nav" data-menu="join">Join Tracker</button>
+            <button class="menuItem" role="menuitem" data-kind="view" data-menu="focus">Toggle focus mode</button>
 
             <div class="menuDivider"></div>
             <div class="menuSectionTitle">Maintenance</div>
@@ -99,6 +110,7 @@
     </header>
 
     <main class="container">
+      <section id="liveStrip" class="liveStrip" aria-label="LIVE now" hidden></section>
       <div class="grid">
         <section class="card" id="kpiCard">
           <div class="cardHeader">
@@ -272,6 +284,8 @@
         </section>
       </div>
     </main>
+
+    <div id="toastCenter" class="toastCenter" aria-live="polite" aria-atomic="true"></div>
 
     <div id="drawerOverlay" class="drawerOverlay" hidden></div>
     <aside id="notifyDrawer" class="drawer" hidden>
