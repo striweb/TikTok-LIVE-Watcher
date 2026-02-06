@@ -1139,6 +1139,7 @@ async function checkUserLive(username) {
 
   return await new Promise((resolve) => {
     let done = false;
+    let armed = false;
     const timerId = setTimeout(() => {
       cleanup();
       resolve({
@@ -1163,6 +1164,7 @@ async function checkUserLive(username) {
     };
 
     const onConnected = (state) => {
+      if (!armed) return;
       cleanup();
       resolve({
         username,
@@ -1178,6 +1180,7 @@ async function checkUserLive(username) {
     };
 
     const onStreamEnd = () => {
+      if (!armed) return;
       cleanup();
       resolve({
         username,
@@ -1192,6 +1195,7 @@ async function checkUserLive(username) {
     };
 
     const onDisconnected = (msg) => {
+      if (!armed) return;
       const errMsg = typeof msg === "string" ? msg : JSON.stringify(msg);
       const lower = String(errMsg).toLowerCase();
       const ended = lower.includes("live has ended");
@@ -1220,6 +1224,7 @@ async function checkUserLive(username) {
 
     try {
       socket.emit("setUniqueId", username, { enableExtendedGiftInfo: true });
+      armed = true;
     } catch (err) {
       cleanup();
       resolve({
