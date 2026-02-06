@@ -68,6 +68,7 @@ const DEFAULTS = {
   accent: "violet",
   density: "comfortable",
   dashboardView: "kanban",
+  dashboardLayout: "default",
   obsParams:
     "showLikes=1&showChats=1&showGifts=1&showFollows=1&showJoins=1&bgColor=rgb(24,23,28)&fontColor=rgb(227,229,235)&fontSize=1.3em"
 };
@@ -462,6 +463,12 @@ function normalizeDashboardView(v) {
   return DEFAULTS.dashboardView;
 }
 
+function normalizeDashboardLayout(v) {
+  const t = String(v || "").trim();
+  if (t === "default" || t === "cards" || t === "ops") return t;
+  return DEFAULTS.dashboardLayout;
+}
+
 function normalizeUsername(u) {
   return String(u || "")
     .trim()
@@ -501,6 +508,7 @@ function getSettings() {
     accent: normalizeAccent(store.get("accent")),
     density: normalizeDensity(store.get("density")),
     dashboardView: normalizeDashboardView(store.get("dashboardView")),
+    dashboardLayout: normalizeDashboardLayout(store.get("dashboardLayout")),
     obsParams: String(store.get("obsParams") || DEFAULTS.obsParams).trim() || DEFAULTS.obsParams
   };
 }
@@ -525,6 +533,7 @@ function setSettings(next) {
     accent: normalizeAccent(next.accent),
     density: normalizeDensity(next.density),
     dashboardView: normalizeDashboardView(next.dashboardView),
+    dashboardLayout: normalizeDashboardLayout(next.dashboardLayout),
     obsParams:
       next && Object.prototype.hasOwnProperty.call(next, "obsParams")
         ? String(next.obsParams || "").trim() || DEFAULTS.obsParams

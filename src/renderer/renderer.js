@@ -59,6 +59,7 @@ let notifications = [];
 let notifLastReadAt = 0;
 let historyAll = [];
 let notifyTab = "all";
+let watchUsersState = [];
 
 const DASH_COLLAPSE_KEY = "dashCollapsedV1";
 
@@ -351,6 +352,18 @@ function formatLastLive(st) {
   return "—";
 }
 
+function lastLiveMini(st) {
+  const now = Date.now();
+  const ts = st?.isLive === true ? Number(st.lastChangeAt || 0) : Number(st.lastLiveSeenAt || 0);
+  if (!Number.isFinite(ts) || ts <= 0) return { label: "—", title: "No LIVE seen yet", p: 0 };
+  const ageMs = Math.max(0, now - ts);
+  const windowMs = 7 * 24 * 60 * 60 * 1000;
+  const p = Math.max(0, Math.min(1, 1 - ageMs / windowMs));
+  const label = formatLastLive(st);
+  const title = `${st?.isLive === true ? "LIVE for" : "Last LIVE"} ${formatDurationSince(ts)} • ${new Date(ts).toLocaleString()}`;
+  return { label, title, p };
+}
+
 function pill(isLive) {
   if (isLive === true) return { text: "LIVE", cls: "live" };
   if (isLive === false) return { text: "offline", cls: "offline" };
@@ -364,6 +377,45 @@ function severityClassFor(st) {
   return "sev-unknown";
 }
 
+function updateStatusSegmented() {
+  const wrap = document.querySelector(".statusSeg");
+  if (!wrap) return;
+  for (const b of wrap.querySelectorAll("button[data-sfilter]")) {
+    const key = b.getAttribute("data-sfilter");
+    b.classList.toggle("active", key === statusFilter);
+  }
+}
+
+function isToday(ts) {
+  if (!ts) return false;
+  const d = new Date(ts);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
+function renderKPIs() {
+  const liveEl = document.getElementById("kpiLive");
+  const watchEl = document.getElementById("kpiWatching");
+  const giftsEl = document.getElementById("kpiGifts");
+  const errEl = document.getElementById("kpiErrors");
+  const card = document.getElementById("kpiCard");
+  if (!liveEl || !watchEl || !giftsEl || !errEl || !card) return;
+
+  const layout = String(settings?.dashboardLayout || "default");
+  card.hidden = layout !== "cards";
+
+  const byUser = state.byUser || {};
+  const liveCount = Object.values(byUser).filter((x) => x?.isLive === true).length;
+  const watchingCount = uniqUsernames(watchUsersState || []).length;
+  const giftsToday = (historyAll || []).filter((e) => e?.type === "gift_sent" && isToday(e.ts)).length;
+  const errorsToday = (historyAll || []).filter((e) => e?.type === "error" && isToday(e.ts)).length;
+
+  animateNumberText(liveEl, liveCount);
+  animateNumberText(watchEl, watchingCount);
+  animateNumberText(giftsEl, giftsToday);
+  animateNumberText(errEl, errorsToday);
+}
+
 function renderStatus() {
   const summaryEl = document.getElementById("summary");
   const listEl = document.getElementById("statusList");
@@ -372,6 +424,7 @@ function renderStatus() {
   const headerEl = document.getElementById("statusTableHeader");
   const view = String(settings?.dashboardView || "table");
   if (headerEl) headerEl.hidden = view === "kanban";
+  updateStatusSegmented();
   const reduce = prefersReducedMotion();
   const first = new Map();
   if (view !== "kanban" && !reduce) {
@@ -426,6 +479,7 @@ function renderStatus() {
       if (statusFilter === "live") return st.isLive === true;
       if (statusFilter === "offline") return st.isLive === false;
       if (statusFilter === "unknown") return st.isLive == null;
+      if (statusFilter === "error") return st.ok === false;
       return true;
     });
 
@@ -474,9 +528,9 @@ function renderStatus() {
 
   for (const st of rows) {
     const p = pill(st.isLive);
-    const liveTime = formatLastLive(st);
+    const liveMini = lastLiveMini(st);
     const lastErr = st.ok === false ? (st.error || st.reason || "error") : "";
-    const room = st.roomId ? String(st.roomId) : "—";
+    const room = st.roomId ? String(st.roomId) : "";
 
     const row = document.createElement("div");
     row.className = `statusRow animIn ${severityClassFor(st)}`;
@@ -487,10 +541,19 @@ function renderStatus() {
         <b>@${st.username}</b>
       </div>
       <div><span class="pill ${p.cls}">${p.text}</span></div>
-      <div class="mono muted">${liveTime}</div>
+      <div class="lastLiveCell" title="${liveMini.title.replace(/"/g, "&quot;")}">
+        <span class="liveMini" style="--p:${liveMini.p}"></span>
+        <span class="mono muted">${liveMini.label}</span>
+      </div>
       <div class="mono muted">${formatTime(st.checkedAt)}</div>
       <div class="mono muted">${st.confidence || "—"}</div>
-      <div class="mono muted">${room}</div>
+      <div class="roomCell">
+        ${
+          room
+            ? `<button class="copyChip mono" type="button" data-copy="${room}" data-tip="Copy roomId" aria-label="Copy roomId">${room}</button>`
+            : `<span class="mono muted">—</span>`
+        }
+      </div>
       <div class="muted truncate" title="${lastErr ? String(lastErr).replace(/"/g, "&quot;") : ""}">${lastErr ? "!" : "—"}</div>
       <div class="statusActions">
         <button class="iconBtn hasTip" type="button" data-chat="${st.username}" data-tip="Chat" aria-label="Chat">
@@ -521,6 +584,21 @@ function renderStatus() {
       openDetails(st.username);
     });
   }
+
+  listEl.querySelectorAll("button[data-copy]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const v = btn.getAttribute("data-copy");
+      if (!v) return;
+      try {
+        await navigator.clipboard.writeText(v);
+        btn.classList.add("copied");
+        setTimeout(() => btn.classList.remove("copied"), 600);
+      } catch {
+        setStatus("Could not copy.");
+      }
+    });
+  });
 
   listEl.querySelectorAll("button[data-open]").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
@@ -841,6 +919,10 @@ function openDetails(username) {
 
   const p = pill(st.isLive);
   const recent = (historyAll || []).filter((e) => e.username === u).slice(0, 10);
+  const globalMin = Math.max(1, Math.min(60, Math.round(Number(settings?.intervalMinutes || 1))));
+  const perMap = settings?.perHostIntervals && typeof settings.perHostIntervals === "object" ? settings.perHostIntervals : {};
+  const override = Math.round(Number(perMap[u] || 0));
+  const overrideText = override ? String(override) : "";
   detailsBody.innerHTML = `
     <div class="detailsGrid">
       <div class="detailsCard">
@@ -857,7 +939,14 @@ function openDetails(username) {
       </div>
       <div class="detailsCard">
         <div class="detailsKey">Policy interval</div>
-        <div class="detailsVal mono">${st.policyIntervalMinutes ? `${st.policyIntervalMinutes}m` : "—"}</div>
+        <div class="detailsVal">
+          <div class="policyInline">
+            <input id="policyOverride" class="input mono" type="number" min="1" max="60" placeholder="${globalMin}" value="${overrideText}" />
+            <button id="policySave" class="btn" type="button">Save</button>
+            <button id="policyClear" class="btn ghost" type="button" ${override ? "" : "disabled"}>Use global</button>
+          </div>
+          <div class="hint">Global: ${globalMin}m • Leave empty to use global. Saved only if different.</div>
+        </div>
       </div>
       <div class="detailsCard">
         <div class="detailsKey">Next due</div>
@@ -874,10 +963,33 @@ function openDetails(username) {
     </div>
 
     <div class="detailsActions">
-      <button class="btn" type="button" id="detailsChat">Chat</button>
-      <button class="btn" type="button" id="detailsOverlayBtn">Overlay</button>
-      <button class="btn" type="button" id="detailsJoin">Join Tracker</button>
-      <button class="btn ghost" type="button" id="detailsHistory">History</button>
+      <button class="iconBtn hasTip" type="button" id="detailsChat" data-tip="Chat" aria-label="Chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
+        </svg>
+      </button>
+      <button class="iconBtn hasTip" type="button" id="detailsOverlayBtn" data-tip="Overlay" aria-label="Overlay">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M14 3h7v7"></path>
+          <path d="M10 14L21 3"></path>
+          <path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"></path>
+        </svg>
+      </button>
+      <button class="iconBtn hasTip" type="button" id="detailsJoin" data-tip="Join Tracker" aria-label="Join Tracker">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <circle cx="12" cy="7" r="3"></circle>
+          <path d="M5.5 21a6.5 6.5 0 0 1 13 0"></path>
+          <path d="M19 8v6"></path>
+          <path d="M22 11h-6"></path>
+        </svg>
+      </button>
+      <button class="iconBtn hasTip" type="button" id="detailsHistory" data-tip="History" aria-label="History">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M3 3v5h5"></path>
+          <path d="M3.05 13a9 9 0 1 0 .5-4.5L3 8"></path>
+          <path d="M12 7v6l4 2"></path>
+        </svg>
+      </button>
     </div>
 
     <div class="h3" style="margin-top:14px;">Recent events</div>
@@ -913,6 +1025,42 @@ function openDetails(username) {
   });
   detailsBody.querySelector("#detailsHistory")?.addEventListener("click", async () => {
     await window.api.openHistoryPopup();
+  });
+
+  const input = detailsBody.querySelector("#policyOverride");
+  const btnSave = detailsBody.querySelector("#policySave");
+  const btnClear = detailsBody.querySelector("#policyClear");
+  const saveOverride = async (val) => {
+    const raw = String(val ?? "").trim();
+    const nextMap = { ...(settings?.perHostIntervals || {}) };
+    if (!raw) {
+      delete nextMap[u];
+    } else {
+      const m = Math.round(Number(raw));
+      if (!Number.isFinite(m) || m < 1 || m > 60) {
+        setStatus("Interval must be 1–60 minutes.");
+        return;
+      }
+      if (m === globalMin) delete nextMap[u];
+      else nextMap[u] = m;
+    }
+    try {
+      settings = await window.api.setSettings({ ...settings, perHostIntervals: nextMap });
+      window.__applyTheme?.(settings);
+      setStatus("Saved.");
+      renderStatus();
+      openDetails(u);
+    } catch (err) {
+      setStatus(`Error: ${String(err?.message || err).slice(0, 80)}`);
+    }
+  };
+  btnSave?.addEventListener("click", async () => await saveOverride(input?.value));
+  btnClear?.addEventListener("click", async () => await saveOverride(""));
+  input?.addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      await saveOverride(input.value);
+    }
   });
 
   setDetailsOpen(true);
@@ -1263,6 +1411,12 @@ async function load() {
   window.__applyTheme?.(settings);
   usernamesState = uniqUsernames(settings.usernames);
   state = await window.api.getState();
+  try {
+    const jt = await window.api.getJoinTrackerState();
+    watchUsersState = uniqUsernames(jt?.watchUsers || []);
+  } catch {
+    watchUsersState = [];
+  }
   renderStatus();
   const h = await window.api.getHistory();
   historyAll = Array.isArray(h) ? h : [];
@@ -1280,6 +1434,7 @@ async function load() {
   renderActivity();
   renderGiftsCard();
   renderCharts();
+  renderKPIs();
   updateDensityToggle();
 }
 
@@ -1400,6 +1555,18 @@ document.getElementById("markAllRead").addEventListener("click", async () => {
     setStatus('Main process is outdated (tray). Exit from tray and start again for "Mark all read" to work.');
   }
 });
+
+document.getElementById("markTabRead")?.addEventListener("click", async () => {
+  const latestTs = Math.max(0, ...getNotifyEvents(notifyTab).map((e) => e?.ts || 0));
+  try {
+    const res = await window.api.markNotificationsRead(latestTs || Date.now());
+    notifLastReadAt = Number(res?.lastReadAt || latestTs || Date.now()) || 0;
+    renderNotifications();
+    setNotifCount(computeUnreadCount());
+  } catch (err) {
+    setStatus('Main process is outdated (tray). Exit from tray and start again for "Mark read" to work.');
+  }
+});
 document.getElementById("closeNotifications").addEventListener("click", () => setDrawer(false));
 document.getElementById("drawerOverlay").addEventListener("click", () => setDrawer(false));
 
@@ -1422,10 +1589,55 @@ document.getElementById("openGiftNotifications")?.addEventListener("click", () =
   setDrawer(true);
 });
 
+function buildSuggestions(q) {
+  const query = String(q || "").trim().toLowerCase().replace(/^@+/, "");
+  if (!query) return [];
+  const out = [];
+  const seen = new Set();
+  for (const u of usernamesState || []) {
+    if (!u.includes(query)) continue;
+    seen.add(u);
+    out.push({ kind: "profile", value: u });
+  }
+  for (const w of watchUsersState || []) {
+    if (seen.has(w)) continue;
+    if (!w.includes(query)) continue;
+    out.push({ kind: "watch", value: w });
+  }
+  return out;
+}
+
+function hideTopSuggest() {
+  const pop = document.getElementById("topSuggest");
+  if (!pop) return;
+  pop.hidden = true;
+  pop.innerHTML = "";
+}
+
+function showTopSuggest(items, q) {
+  const pop = document.getElementById("topSuggest");
+  if (!pop) return;
+  const query = String(q || "").trim().toLowerCase().replace(/^@+/, "");
+  if (!query || !items.length) return hideTopSuggest();
+  pop.hidden = false;
+  pop.innerHTML = items
+    .slice(0, 10)
+    .map(
+      (x) => `
+        <button class="suggestItem" type="button" role="option" data-kind="${x.kind}" data-value="${x.value}">
+          <span class="suggestTitle">@${x.value}</span>
+          <span class="suggestMeta">${x.kind === "watch" ? "Watching" : "Profile"}</span>
+        </button>
+      `
+    )
+    .join("");
+}
+
 document.getElementById("statusSearch").addEventListener("input", (e) => {
   statusSearch = String(e.target.value || "");
   const t = document.getElementById("topSearch");
   if (t && t.value !== statusSearch) t.value = statusSearch;
+  showTopSuggest(buildSuggestions(statusSearch), statusSearch);
   renderStatus();
 });
 
@@ -1433,7 +1645,44 @@ document.getElementById("topSearch").addEventListener("input", (e) => {
   statusSearch = String(e.target.value || "");
   const s = document.getElementById("statusSearch");
   if (s && s.value !== statusSearch) s.value = statusSearch;
+  showTopSuggest(buildSuggestions(statusSearch), statusSearch);
   renderStatus();
+});
+
+document.getElementById("topSearch")?.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") hideTopSuggest();
+  if (e.key === "Enter") {
+    const pop = document.getElementById("topSuggest");
+    const first = pop?.querySelector(".suggestItem");
+    if (first) {
+      e.preventDefault();
+      first.click();
+    }
+  }
+});
+
+document.getElementById("topSuggest")?.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-value]");
+  if (!btn) return;
+  const u = btn.getAttribute("data-value");
+  if (!u) return;
+  const top = document.getElementById("topSearch");
+  const s = document.getElementById("statusSearch");
+  if (top) top.value = `@${u}`;
+  if (s) s.value = `@${u}`;
+  statusSearch = `@${u}`;
+  hideTopSuggest();
+  renderStatus();
+  openDetails(u);
+});
+
+document.addEventListener("click", (e) => {
+  const pop = document.getElementById("topSuggest");
+  const top = document.getElementById("topSearch");
+  if (!pop || !top) return;
+  if (pop.hidden) return;
+  if (pop.contains(e.target) || top.contains(e.target)) return;
+  hideTopSuggest();
 });
 
 document.addEventListener("keydown", (e) => {
@@ -1488,6 +1737,16 @@ document.getElementById("statusSort").addEventListener("change", (e) => {
 
 document.getElementById("statusFilter").addEventListener("change", (e) => {
   statusFilter = String(e.target.value || "all");
+  renderStatus();
+});
+
+document.querySelector(".statusSeg")?.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-sfilter]");
+  if (!btn) return;
+  const key = btn.getAttribute("data-sfilter") || "all";
+  statusFilter = key;
+  const fEl = document.getElementById("statusFilter");
+  if (fEl) fEl.value = key;
   renderStatus();
 });
 

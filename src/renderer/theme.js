@@ -32,12 +32,14 @@ function applyTheme(settings) {
   const accent = String(settings?.accent || "violet");
   const density = String(settings?.density || "comfortable");
   const dark = String(settings?.darkVariant || "midnight");
+  const layout = String(settings?.dashboardLayout || "default");
 
   document.documentElement.dataset.themeMode = mode;
   document.documentElement.dataset.theme = theme;
   document.documentElement.dataset.accent = accent;
   document.documentElement.dataset.density = density;
   document.documentElement.dataset.dark = dark;
+  document.documentElement.dataset.layout = layout;
 
   ensureSystemThemeListener();
 }

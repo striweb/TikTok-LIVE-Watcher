@@ -28,6 +28,7 @@
             </svg>
           </span>
           <input id="topSearch" class="topSearch" type="text" spellcheck="false" placeholder="Search profiles… (Ctrl+K)" />
+          <div id="topSuggest" class="suggestPopover" role="listbox" aria-label="Search suggestions" hidden></div>
         </div>
       </div>
 
@@ -48,6 +49,13 @@
           <span class="badge badgeWarn" id="chipCooldown" title="Rate limit cooldown" hidden>
             <span class="dot"></span><span class="label">Cooldown</span><span class="value mono">—</span>
           </span>
+        </div>
+        <div class="segmented statusSeg" role="group" aria-label="Status filter">
+          <button class="segBtn" type="button" data-sfilter="all">All</button>
+          <button class="segBtn" type="button" data-sfilter="live">LIVE</button>
+          <button class="segBtn" type="button" data-sfilter="offline">Offline</button>
+          <button class="segBtn" type="button" data-sfilter="unknown">Unknown</button>
+          <button class="segBtn" type="button" data-sfilter="error">Errors</button>
         </div>
         <button id="openNotifications" class="btn ghost notifBtn topIconBtn" title="Notifications" aria-label="Notifications">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" aria-hidden="true">
@@ -92,6 +100,33 @@
 
     <main class="container">
       <div class="grid">
+        <section class="card" id="kpiCard">
+          <div class="cardHeader">
+            <div>
+              <div class="h3">Overview</div>
+              <div class="muted">Quick KPIs (today).</div>
+            </div>
+          </div>
+          <div class="kpiGrid">
+            <div class="kpi">
+              <div class="kpiKey">LIVE</div>
+              <div id="kpiLive" class="kpiVal mono">—</div>
+            </div>
+            <div class="kpi">
+              <div class="kpiKey">Watching</div>
+              <div id="kpiWatching" class="kpiVal mono">—</div>
+            </div>
+            <div class="kpi">
+              <div class="kpiKey">Gifts</div>
+              <div id="kpiGifts" class="kpiVal mono">—</div>
+            </div>
+            <div class="kpi">
+              <div class="kpiKey">Errors</div>
+              <div id="kpiErrors" class="kpiVal mono">—</div>
+            </div>
+          </div>
+        </section>
+
         <section class="card" id="statusCard">
           <div class="cardHeader">
             <div>
@@ -106,6 +141,7 @@
                 <option value="live">LIVE</option>
                 <option value="offline">Offline</option>
                 <option value="unknown">Unknown</option>
+                <option value="error">Errors</option>
               </select>
               <select id="statusSort" class="select">
                 <option value="liveFirst">LIVE first</option>
@@ -115,7 +151,7 @@
             </div>
           </div>
           <div class="tableHeader" id="statusTableHeader">
-            <div>Profile</div>
+            <div class="thProfile">Profile</div>
             <div>Status</div>
             <div>LIVE</div>
             <div>Check</div>
@@ -245,7 +281,10 @@
           <div class="muted">Latest events</div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
-          <button id="markAllRead" class="btn">Mark all read</button>
+          <div class="splitBtn" role="group" aria-label="Mark read">
+            <button id="markAllRead" class="btn">Mark all</button>
+            <button id="markTabRead" class="btn ghost">This tab</button>
+          </div>
           <button id="closeNotifications" class="btn ghost">Close</button>
         </div>
       </div>

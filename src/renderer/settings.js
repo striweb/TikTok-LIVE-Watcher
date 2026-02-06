@@ -16,6 +16,7 @@ const DEFAULTS = {
   accent: "violet",
   density: "comfortable",
   dashboardView: "kanban",
+  dashboardLayout: "default",
   obsParams:
     "showLikes=1&showChats=1&showGifts=1&showFollows=1&showJoins=1&bgColor=rgb(24,23,28)&fontColor=rgb(227,229,235)&fontSize=1.3em"
 };
@@ -72,6 +73,12 @@ function normalizeDashboardView(v) {
   const t = String(v || "").trim();
   if (t === "table" || t === "kanban") return t;
   return DEFAULTS.dashboardView;
+}
+
+function normalizeDashboardLayout(v) {
+  const t = String(v || "").trim();
+  if (t === "default" || t === "cards" || t === "ops") return t;
+  return DEFAULTS.dashboardLayout;
 }
 
 function normalizeUsername(u) {
@@ -187,6 +194,7 @@ async function load() {
   document.getElementById("accent").value = normalizeAccent(settings.accent);
   document.getElementById("density").value = normalizeDensity(settings.density);
   document.getElementById("dashboardView").value = normalizeDashboardView(settings.dashboardView);
+  document.getElementById("dashboardLayout").value = normalizeDashboardLayout(settings.dashboardLayout);
   document.getElementById("themePreset").value = "";
 }
 
@@ -224,6 +232,7 @@ async function save() {
     accent: normalizeAccent(document.getElementById("accent").value),
     density: normalizeDensity(document.getElementById("density").value),
     dashboardView: normalizeDashboardView(document.getElementById("dashboardView").value),
+    dashboardLayout: normalizeDashboardLayout(document.getElementById("dashboardLayout").value),
     obsParams: settings.obsParams
   };
   settings = await window.api.setSettings(next);
@@ -368,6 +377,7 @@ window.api.onSettingsUpdated((s) => {
   document.getElementById("accent").value = normalizeAccent(settings.accent);
   document.getElementById("density").value = normalizeDensity(settings.density);
   document.getElementById("dashboardView").value = normalizeDashboardView(settings.dashboardView);
+  document.getElementById("dashboardLayout").value = normalizeDashboardLayout(settings.dashboardLayout);
   document.getElementById("themePreset").value = "";
 });
 
