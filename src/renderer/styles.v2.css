@@ -1123,6 +1123,182 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+/* Details premium (popup) */
+.pageDetails #detailsHeroCard {
+  padding: 0;
+}
+.pageDetails #detailsHeroCard .detailsHero {
+  margin: 0;
+  border-radius: calc(var(--r-card, 16px) + 2px);
+}
+
+.detailsHeroV4 {
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--elev-2, 0 18px 46px rgba(0, 0, 0, 0.42)), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--glass-bg) 92%, transparent),
+      color-mix(in srgb, var(--glass-bg) 72%, transparent)
+    )
+    padding-box,
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent) 34%, transparent),
+      color-mix(in srgb, var(--accent2) 26%, transparent)
+    )
+    border-box;
+}
+.detailsHeroV4::before {
+  content: "";
+  position: absolute;
+  inset: -40% -30%;
+  pointer-events: none;
+  background:
+    radial-gradient(520px 260px at 18% 25%, rgba(255, 255, 255, 0.18), transparent 62%),
+    radial-gradient(520px 260px at 86% 20%, color-mix(in srgb, var(--accent2) 14%, transparent), transparent 62%);
+  opacity: 0.55;
+  filter: blur(18px);
+}
+
+.heroRing {
+  width: 48px;
+  height: 48px;
+  border-radius: 18px;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.20), color-mix(in srgb, var(--accent2) 22%, transparent));
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.26);
+}
+.heroRing.live {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.55), rgba(255, 255, 255, 0.14));
+}
+.heroRing .heroAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.heroStatBig .heroV {
+  font-size: 20px;
+  letter-spacing: 0.2px;
+}
+
+.heroActionsPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.pillBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 85%, transparent);
+  background: color-mix(in srgb, var(--glass-bg) 92%, transparent);
+  color: rgba(232, 233, 239, 0.92);
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: transform 90ms ease, background 120ms ease, border-color 120ms ease;
+}
+.pillBtn.ghost {
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(232, 233, 239, 0.82);
+}
+.pillBtn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(232, 233, 239, 0.20);
+  background: rgba(255, 255, 255, 0.06);
+}
+.pillBtn:active {
+  transform: translateY(0);
+}
+.pillIcon {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+}
+.pillIcon svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.detailsTimeline {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+.timelineItem {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 10px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--glass-border) 85%, transparent);
+  background: rgba(255, 255, 255, 0.03);
+}
+.timelineIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(232, 233, 239, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(232, 233, 239, 0.78);
+}
+.timelineIcon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.timelineItem[data-type="live_started"] .timelineIcon {
+  color: rgba(34, 197, 94, 0.95);
+  background: rgba(34, 197, 94, 0.10);
+  border-color: rgba(34, 197, 94, 0.22);
+}
+.timelineItem[data-type="viewer_joined"] .timelineIcon {
+  color: color-mix(in srgb, var(--accent2) 85%, white);
+  background: color-mix(in srgb, var(--accent2) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent2) 24%, transparent);
+}
+.timelineItem[data-type="gift_sent"] .timelineIcon {
+  color: rgba(245, 158, 11, 0.95);
+  background: rgba(245, 158, 11, 0.10);
+  border-color: rgba(245, 158, 11, 0.22);
+}
+.timelineItem[data-type="error"] .timelineIcon,
+.timelineItem[data-type="rate_limited"] .timelineIcon {
+  color: rgba(239, 68, 68, 0.92);
+  background: rgba(239, 68, 68, 0.10);
+  border-color: rgba(239, 68, 68, 0.22);
+}
+.timelineTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+@media (max-width: 680px) {
+  .heroActionsPills {
+    justify-content: flex-start;
+  }
+}
+
 .heroAvatar {
   width: 44px;
   height: 44px;

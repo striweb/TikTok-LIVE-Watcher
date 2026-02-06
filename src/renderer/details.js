@@ -76,6 +76,34 @@ function pill(isLive) {
   return { text: "Unknown", cls: "unknown" };
 }
 
+function actionIconSvg(name) {
+  const n = String(name || "");
+  if (n === "copy")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M8 8h12v12H8z"></path><path d="M4 16H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v1"></path></svg>`;
+  if (n === "chat")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg>`;
+  if (n === "overlay")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 3h7v7"></path><path d="M10 14L21 3"></path><path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"></path></svg>`;
+  if (n === "join")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="7" r="3"></circle><path d="M5.5 21a6.5 6.5 0 0 1 13 0"></path><path d="M19 8v6"></path><path d="M22 11h-6"></path></svg>`;
+  if (n === "history")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 3v5h5"></path><path d="M3.05 13a9 9 0 1 0 .5-4.5L3 8"></path><path d="M12 7v6l4 2"></path></svg>`;
+  if (n === "bolt")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M13 2L3 14h7l-1 8 12-14h-7l-1-6z"></path></svg>`;
+  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2v20"></path><path d="M2 12h20"></path></svg>`;
+}
+
+function eventIconSvg(type) {
+  const t = String(type || "");
+  if (t === "live_started") return actionIconSvg("bolt");
+  if (t === "viewer_joined") return actionIconSvg("join");
+  if (t === "gift_sent")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 12v10H4V12"></path><path d="M2 7h20v5H2z"></path><path d="M12 22V7"></path><path d="M12 7c-2.5 0-3.5-1.5-3.5-3S10 1 12 3c2-2 3.5 0 3.5 1S14.5 7 12 7z"></path></svg>`;
+  if (t === "rate_limited" || t === "error")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.3 3.3h3.4L21 10.6v3.4L13.7 21h-3.4L3 13.7v-3.4z"></path></svg>`;
+  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path></svg>`;
+}
+
 function toast(msg, kind = "ok") {
   const wrap = document.getElementById("toastCenter");
   if (!wrap) return;
@@ -150,10 +178,13 @@ function render() {
     const lastLiveSeen = st.lastLiveSeenAt ? `${formatDate(st.lastLiveSeenAt)} ${formatTime(st.lastLiveSeenAt)}` : "—";
     const liveDuration =
       st.isLive === true && st.lastLiveStartedAt ? formatDuration(Date.now() - Number(st.lastLiveStartedAt || 0)) : "";
+    const conf = st.confidence ? String(st.confidence) : "—";
 
     heroCard.innerHTML = `
-      <div class="detailsHero">
-        <div class="heroAvatar" style="${avatarStyle(u)}">${avatarLetter(u)}</div>
+      <div class="detailsHero detailsHeroV4 ${p.cls === "live" ? "isLive" : ""}">
+        <div class="heroRing ${p.cls}">
+          <div class="heroAvatar" style="${avatarStyle(u)}">${avatarLetter(u)}</div>
+        </div>
         <div class="heroMain">
           <div class="heroTop">
             <div class="heroUser">@${safeText(u)}</div>
@@ -167,9 +198,11 @@ function render() {
             }
             <span class="heroSep">•</span>
             Last check: <span class="mono">${safeText(checked)}</span>
+            <span class="heroSep">•</span>
+            Confidence: <span class="mono">${safeText(conf)}</span>
           </div>
           <div class="heroStats">
-            <div class="heroStat">
+            <div class="heroStat heroStatBig">
               <div class="heroK">Viewers</div>
               <div class="heroV mono">${safeText(viewers)}</div>
             </div>
@@ -189,39 +222,21 @@ function render() {
             </div>
           </div>
         </div>
-        <div class="detailsActions heroActions">
-          <button class="iconBtn hasTip ghost" type="button" id="actCopy" data-tip="Copy @username" aria-label="Copy username">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-              <path d="M8 8h12v12H8z"></path>
-              <path d="M4 16H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v1"></path>
-            </svg>
+        <div class="heroActionsPills">
+          <button class="pillBtn" type="button" id="actChat">
+            <span class="pillIcon" aria-hidden="true">${actionIconSvg("chat")}</span>Chat
           </button>
-          <button class="iconBtn hasTip" type="button" id="actChat" data-tip="Chat" aria-label="Chat">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-              <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
-            </svg>
+          <button class="pillBtn" type="button" id="actOverlay">
+            <span class="pillIcon" aria-hidden="true">${actionIconSvg("overlay")}</span>Overlay
           </button>
-          <button class="iconBtn hasTip" type="button" id="actOverlay" data-tip="Overlay" aria-label="Overlay">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-              <path d="M14 3h7v7"></path>
-              <path d="M10 14L21 3"></path>
-              <path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"></path>
-            </svg>
+          <button class="pillBtn" type="button" id="actJoin">
+            <span class="pillIcon" aria-hidden="true">${actionIconSvg("join")}</span>Join
           </button>
-          <button class="iconBtn hasTip" type="button" id="actJoin" data-tip="Join Tracker" aria-label="Join Tracker">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-              <circle cx="12" cy="7" r="3"></circle>
-              <path d="M5.5 21a6.5 6.5 0 0 1 13 0"></path>
-              <path d="M19 8v6"></path>
-              <path d="M22 11h-6"></path>
-            </svg>
+          <button class="pillBtn ghost" type="button" id="actHistory">
+            <span class="pillIcon" aria-hidden="true">${actionIconSvg("history")}</span>History
           </button>
-          <button class="iconBtn hasTip ghost" type="button" id="actHistory" data-tip="History" aria-label="History">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-              <path d="M3 3v5h5"></path>
-              <path d="M3.05 13a9 9 0 1 0 .5-4.5L3 8"></path>
-              <path d="M12 7v6l4 2"></path>
-            </svg>
+          <button class="pillBtn ghost" type="button" id="actCopy">
+            <span class="pillIcon" aria-hidden="true">${actionIconSvg("copy")}</span>Copy
           </button>
         </div>
       </div>
@@ -306,15 +321,19 @@ function render() {
       eventsBody.innerHTML = `<div class="emptyState"><div class="emptyTitle">No events</div><div class="emptySub">Nothing recorded for @${safeText(u)} yet.</div></div>`;
     } else {
       eventsBody.innerHTML = `
-        <div class="activityList">
+        <div class="detailsTimeline">
           ${ev
             .map((e) => {
               const when = e?.ts ? `${relTime(e.ts)} • ${formatTime(e.ts)}` : "—";
-              const t = safeText(e?.type || "event");
+              const rawType = String(e?.type || "event");
+              const t = safeText(rawType);
               const msg = safeText(e?.summary || e?.reason || e?.error || "");
-              return `<div class="activityItem animIn">
-                <div><b>${t}</b> <span class="muted mono">${when}</span></div>
-                <div class="muted">${msg}</div>
+              return `<div class="timelineItem animIn" data-type="${rawType.replace(/"/g, "&quot;")}">
+                <div class="timelineIcon" aria-hidden="true">${eventIconSvg(rawType)}</div>
+                <div class="timelineBody">
+                  <div class="timelineTop"><b>${t}</b> <span class="muted mono">${when}</span></div>
+                  <div class="muted">${msg}</div>
+                </div>
               </div>`;
             })
             .join("")}
