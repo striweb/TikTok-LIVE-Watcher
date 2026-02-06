@@ -330,50 +330,7 @@ body.checking #chartsCard .cardBody::after {
 
 
 #detailsDrawer.drawer {
-  width: min(560px, 96vw);
-}
-
-
-.liveStrip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 10px 2px;
-  margin-bottom: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x proximity;
-}
-.liveChip {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--glass-bg) 82%, transparent);
-  box-shadow: var(--glass-shadow);
-  cursor: pointer;
-  scroll-snap-align: start;
-}
-.liveChip.pinned {
-  border-color: color-mix(in srgb, var(--accent2) 34%, var(--glass-border));
-}
-.avatar.mini {
-  width: 26px;
-  height: 26px;
-  font-size: 12px;
-}
-.iconBtn.mini {
-  width: 34px;
-  height: 34px;
-}
-.liveName {
-  font-weight: 900;
-}
-.liveMeta {
-  color: var(--muted);
+  width: min(720px, 96vw);
 }
 
 html[data-focus="1"] #activityCard,
@@ -382,9 +339,6 @@ html[data-focus="1"] #chartsCard,
 html[data-focus="1"] #healthCard,
 html[data-focus="1"] #kpiCard {
   display: none !important;
-}
-html[data-focus="1"] .liveStrip {
-  margin-bottom: 0;
 }
 
 .toastCenter {

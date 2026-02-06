@@ -497,105 +497,6 @@ function renderKPIs() {
   animateNumberText(errEl, errorsToday);
 }
 
-function renderLiveStrip() {
-  const strip = document.getElementById("liveStrip");
-  if (!strip) return;
-  const byUser = state.byUser || {};
-  const live = Object.values(byUser)
-    .filter((x) => x?.isLive === true && x?.username)
-    .map((x) => x)
-    .sort((a, b) => String(a.username).localeCompare(String(b.username)));
-
-  if (!live.length) {
-    strip.hidden = true;
-    strip.innerHTML = "";
-    return;
-  }
-
-  const pinned = pinnedSet();
-  live.sort((a, b) => {
-    const ap = pinned.has(a.username) ? 0 : 1;
-    const bp = pinned.has(b.username) ? 0 : 1;
-    if (ap !== bp) return ap - bp;
-    return String(a.username).localeCompare(String(b.username));
-  });
-
-  const np = joinTrackerState && joinTrackerState.active
-    ? (() => {
-        const mode = String(joinTrackerState.mode || "single");
-        const host = normalizeUsername(joinTrackerState.trackedHost || "");
-        const now = Date.now();
-        const last = Number(joinTrackerState.lastSwitchAt || 0);
-        const dwell = Number(joinTrackerState.dwellMs || 0);
-        const secLeft =
-          mode === "allLive" && last > 0 && dwell > 0 ? Math.max(0, Math.floor((last + dwell - now) / 1000)) : 0;
-        const mm = Math.floor(secLeft / 60);
-        const ss = secLeft % 60;
-        const countdown = mode === "allLive" ? `${mm}:${String(ss).padStart(2, "0")}` : "—";
-        const title = mode === "allLive" ? `Switch in ${countdown}` : "Tracking single host";
-        return `
-          <div class="liveChip nowPlaying" data-user="${host || ""}" title="${title.replace(/"/g, "&quot;")}">
-            <span class="pill live">TRACK</span>
-            <span class="liveName">${host ? `@${host}` : "—"}</span>
-            <span class="liveMeta mono">${mode}</span>
-            <span class="liveMeta mono">${mode === "allLive" ? countdown : ""}</span>
-            <button class="iconBtn mini hasTip" type="button" data-open-join="1" data-tip="Join Tracker" aria-label="Join Tracker">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-                <circle cx="12" cy="7" r="3"></circle>
-                <path d="M5.5 21a6.5 6.5 0 0 1 13 0"></path>
-              </svg>
-            </button>
-          </div>
-        `;
-      })()
-    : "";
-
-  strip.hidden = false;
-  strip.innerHTML = np + live
-    .slice(0, 18)
-    .map((st) => {
-      const u = st.username;
-      const isPinned = pinned.has(u);
-      const viewers = Number.isFinite(Number(st.viewerCount)) ? Math.round(Number(st.viewerCount)) : null;
-      return `
-        <div class="liveChip ${isPinned ? "pinned" : ""}" data-user="${u}">
-          <span class="avatar mini" style="${avatarStyle(u)}" aria-hidden="true">${avatarLetter(u)}</span>
-          <span class="liveName">@${u}</span>
-          <span class="liveMeta mono">${formatDurationSince(st.lastChangeAt)}</span>
-          <span class="liveMeta mono">${viewers != null ? `${viewers}` : "—"}</span>
-          <button class="iconBtn mini hasTip" type="button" data-pin="${u}" data-tip="${isPinned ? "Unpin" : "Pin"}" aria-label="Pin">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-              <path d="M12 17l-5 3 1.2-5.8L4 9.6l5.9-.6L12 3l2.1 6 5.9.6-4.2 4.6L17 20z"></path>
-            </svg>
-          </button>
-        </div>
-      `;
-    })
-    .join("");
-
-  strip.querySelectorAll(".liveChip[data-user]").forEach((el) => {
-    el.addEventListener("click", () => openDetails(el.getAttribute("data-user")));
-  });
-  strip.querySelectorAll("button[data-pin]").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const u = btn.getAttribute("data-pin");
-      if (!u) return;
-      togglePinned(u);
-      toast("Pinned updated.");
-      renderLiveStrip();
-      renderStatus();
-    });
-  });
-
-  strip.querySelectorAll("button[data-open-join]").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      await window.api.openJoinTrackerPopup(null);
-    });
-  });
-}
-
 function renderStatus() {
   const summaryEl = document.getElementById("summary");
   const listEl = document.getElementById("statusList");
@@ -677,15 +578,25 @@ function renderStatus() {
       return true;
     });
 
+  const pinned = pinnedSet();
+  const pinnedCmp = (a, b) => {
+    const ap = pinned.has(a.username) ? 0 : 1;
+    const bp = pinned.has(b.username) ? 0 : 1;
+    if (ap !== bp) return ap - bp;
+    return 0;
+  };
+
   const sorters = {
     liveFirst: (a, b) => {
+      const pin = pinnedCmp(a, b);
+      if (pin) return pin;
       const av = a.isLive === true ? 0 : a.isLive === false ? 1 : 2;
       const bv = b.isLive === true ? 0 : b.isLive === false ? 1 : 2;
       if (av !== bv) return av - bv;
       return String(a.username).localeCompare(String(b.username));
     },
-    checkedDesc: (a, b) => (b.checkedAt || 0) - (a.checkedAt || 0),
-    nameAsc: (a, b) => String(a.username).localeCompare(String(b.username))
+    checkedDesc: (a, b) => pinnedCmp(a, b) || (b.checkedAt || 0) - (a.checkedAt || 0),
+    nameAsc: (a, b) => pinnedCmp(a, b) || String(a.username).localeCompare(String(b.username))
   };
   rows.sort(sorters[statusSort] || sorters.liveFirst);
 
@@ -1670,7 +1581,6 @@ async function load() {
     watchUsersState = [];
   }
   renderStatus();
-  renderLiveStrip();
   const h = await window.api.getHistory();
   historyAll = Array.isArray(h) ? h : [];
   try {
@@ -2022,7 +1932,6 @@ window.api.onStateUpdated((s) => {
   renderStatus();
   renderHealth();
   renderHealthBadges();
-  renderLiveStrip();
 });
 
 window.api.onSettingsUpdated((s) => {
@@ -2049,7 +1958,6 @@ window.api.onJoinTrackerUpdated((payload) => {
   joinTrackerState = payload || joinTrackerState;
   if (Array.isArray(payload?.watchUsers)) watchUsersState = uniqUsernames(payload.watchUsers);
   renderKPIs();
-  renderLiveStrip();
 });
 
 window.api.onNotificationsStateUpdated((s) => {
