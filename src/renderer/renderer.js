@@ -1572,11 +1572,11 @@ function updateDensityToggle() {
   const btnComfort = document.getElementById("densityComfortable");
   const btnCompact = document.getElementById("densityCompact");
   const btnUltra = document.getElementById("densityUltra");
-  if (!btnComfort || !btnCompact || !btnUltra) return;
+  if (!btnComfort || !btnCompact) return;
   const d = String(settings?.density || "comfortable");
   btnComfort.classList.toggle("active", d === "comfortable");
   btnCompact.classList.toggle("active", d === "compact");
-  btnUltra.classList.toggle("active", d === "ultra");
+  if (btnUltra) btnUltra.classList.toggle("active", d === "ultra");
 }
 
 async function load() {
@@ -1702,6 +1702,7 @@ document.getElementById("densityComfortable").addEventListener("click", async ()
     settings = await window.api.setSettings({ ...settings, density: "comfortable" });
     window.__applyTheme?.(settings);
     updateDensityToggle();
+    toast(`Density: ${String(settings?.density || "comfortable")}`);
   } catch (err) {
     setStatus(`Error: ${String(err?.message || err).slice(0, 80)}`);
   }
@@ -1712,6 +1713,7 @@ document.getElementById("densityCompact").addEventListener("click", async () => 
     settings = await window.api.setSettings({ ...settings, density: "compact" });
     window.__applyTheme?.(settings);
     updateDensityToggle();
+    toast(`Density: ${String(settings?.density || "compact")}`);
   } catch (err) {
     setStatus(`Error: ${String(err?.message || err).slice(0, 80)}`);
   }
@@ -1722,6 +1724,7 @@ document.getElementById("densityUltra")?.addEventListener("click", async () => {
     settings = await window.api.setSettings({ ...settings, density: "ultra" });
     window.__applyTheme?.(settings);
     updateDensityToggle();
+    toast(`Density: ${String(settings?.density || "ultra")}`);
   } catch (err) {
     setStatus(`Error: ${String(err?.message || err).slice(0, 80)}`);
   }
