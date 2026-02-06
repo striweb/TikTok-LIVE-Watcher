@@ -421,6 +421,10 @@ button.copyChip.copied {
   align-items: center;
 }
 
+.pageDetails .policyPresetLabel {
+  opacity: 0.9;
+}
+
 .pageDetails .policyPreset {
   width: 100%;
 }
