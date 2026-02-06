@@ -1918,6 +1918,65 @@ function hideTopSuggest() {
 let cmdkOpen = false;
 let cmdkActive = 0;
 let cmdkLastFocus = null;
+const CMDK_FAVS_KEY = "cmdkFavoritesV1";
+
+function readJsonLS(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const v = JSON.parse(raw);
+    return v ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJsonLS(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+}
+
+function cmdkFavs() {
+  const arr = readJsonLS(CMDK_FAVS_KEY, []);
+  return new Set(Array.isArray(arr) ? arr.map(String) : []);
+}
+
+function cmdkToggleFav(id) {
+  const key = String(id || "");
+  if (!key) return;
+  const set = cmdkFavs();
+  if (set.has(key)) set.delete(key);
+  else set.add(key);
+  writeJsonLS(CMDK_FAVS_KEY, Array.from(set));
+}
+
+function cmdkIconSvg(name) {
+  const n = String(name || "");
+  if (n === "settings")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 1l1.6 3.2 3.6.5-2.6 2.5.6 3.6L12 9.8 8.8 10.8l.6-3.6L6.8 4.7l3.6-.5L12 1z"></path><path d="M12 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"></path></svg>`;
+  if (n === "history")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 3v5h5"></path><path d="M3.05 13a9 9 0 1 0 .5-4.5L3 8"></path><path d="M12 7v6l4 2"></path></svg>`;
+  if (n === "join")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="7" r="3"></circle><path d="M5.5 21a6.5 6.5 0 0 1 13 0"></path><path d="M19 8v6"></path><path d="M22 11h-6"></path></svg>`;
+  if (n === "focus")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M7 3H3v4"></path><path d="M17 3h4v4"></path><path d="M21 17v4h-4"></path><path d="M3 17v4h4"></path><path d="M9 12h6"></path><path d="M12 9v6"></path></svg>`;
+  if (n === "bell")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>`;
+  if (n === "zap")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M13 2L3 14h7l-1 8 12-14h-7l-1-6z"></path></svg>`;
+  if (n === "theme")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9 7 7 0 0 0 9 9z"></path></svg>`;
+  if (n === "layers")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l9 5-9 5-9-5 9-5z"></path><path d="M3 12l9 5 9-5"></path><path d="M3 17l9 5 9-5"></path></svg>`;
+  if (n === "droplet")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2s7 7.5 7 13a7 7 0 0 1-14 0c0-5.5 7-13 7-13z"></path></svg>`;
+  if (n === "grid")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 3h7v7H3z"></path><path d="M14 3h7v7h-7z"></path><path d="M14 14h7v7h-7z"></path><path d="M3 14h7v7H3z"></path></svg>`;
+  if (n === "user")
+    return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="7" r="4"></circle><path d="M5.5 21a7.5 7.5 0 0 1 13 0"></path></svg>`;
+  return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2v20"></path><path d="M2 12h20"></path></svg>`;
+}
 
 function cmdkEls() {
   return {
@@ -1937,15 +1996,17 @@ function cmdkCommands() {
     {
       kind: "cmd",
       id: "openSettings",
+      icon: "settings",
       title: "Open Settings",
       sub: "Profiles, themes, monitoring",
       meta: "Popup",
       run: async () => await window.api.openSettingsPopup()
     },
-    { kind: "cmd", id: "openHistory", title: "Open History", sub: "Logs and exports", meta: "Popup", run: async () => await window.api.openHistoryPopup() },
+    { kind: "cmd", id: "openHistory", icon: "history", title: "Open History", sub: "Logs and exports", meta: "Popup", run: async () => await window.api.openHistoryPopup() },
     {
       kind: "cmd",
       id: "openJoin",
+      icon: "join",
       title: "Open Join Tracker",
       sub: "Watch viewers & gifts",
       meta: "Popup",
@@ -1954,6 +2015,7 @@ function cmdkCommands() {
     {
       kind: "cmd",
       id: "toggleFocus",
+      icon: "focus",
       title: "Toggle Focus mode",
       sub: "Hide extra dashboard cards",
       meta: isFocusMode() ? "ON" : "OFF",
@@ -1965,6 +2027,7 @@ function cmdkCommands() {
     {
       kind: "cmd",
       id: "openNotifications",
+      icon: "bell",
       title: "Open Notifications",
       sub: "Grouped by day",
       meta: "Drawer",
@@ -1973,6 +2036,7 @@ function cmdkCommands() {
     {
       kind: "cmd",
       id: "checkNow",
+      icon: "zap",
       title: "Check now",
       sub: "Run an immediate status check",
       meta: "Run",
@@ -1981,6 +2045,7 @@ function cmdkCommands() {
     {
       kind: "cmd",
       id: "themeMode",
+      icon: "theme",
       title: `Theme mode: ${themeMode}`,
       sub: "Cycle system → dark → light",
       meta: "Theme",
@@ -1994,6 +2059,7 @@ function cmdkCommands() {
     {
       kind: "cmd",
       id: "density",
+      icon: "grid",
       title: `Density: ${density}`,
       sub: "Cycle comfortable → compact → ultra",
       meta: "UI",
@@ -2008,6 +2074,7 @@ function cmdkCommands() {
     {
       kind: "cmd",
       id: "glass",
+      icon: "droplet",
       title: `Glass: ${glass}`,
       sub: "Cycle low → med → high",
       meta: "Appearance",
@@ -2021,8 +2088,9 @@ function cmdkCommands() {
     {
       kind: "cmd",
       id: "pack",
+      icon: "layers",
       title: `Theme pack: ${pack}`,
-      sub: "Cycle packs (affects radius/spacing)",
+      sub: "Type “pack …” to quick switch (affects radius/spacing)",
       meta: "Pack",
       run: async () => {
         const packs = ["default", "ops", "streamer", "minimal", "neon", "midnightPro", "graphite", "nord", "oled", "pearl"];
@@ -2046,6 +2114,7 @@ function cmdkProfiles(q) {
     items.push({
       kind: "profile",
       id: `p:${u}`,
+      icon: "user",
       title: `@${u}`,
       sub: "Open Details",
       meta: "Details",
@@ -2058,6 +2127,7 @@ function cmdkProfiles(q) {
     items.push({
       kind: "watch",
       id: `w:${w}`,
+      icon: "user",
       title: `@${w}`,
       sub: "Watching (Join Tracker)",
       meta: "Watching",
@@ -2067,16 +2137,57 @@ function cmdkProfiles(q) {
   return items;
 }
 
+function cmdkPackItems(q) {
+  const raw = String(q || "").trim().toLowerCase();
+  const wants = raw.startsWith("pack") || raw.startsWith("theme pack") || raw.includes(" pack");
+  if (!wants) return [];
+  const needle = raw.replace(/^theme\s+pack\s*/g, "").replace(/^pack\s*/g, "").replace(/^pack:\s*/g, "").trim();
+  const packs = [
+    { id: "default", label: "Default" },
+    { id: "ops", label: "Ops" },
+    { id: "streamer", label: "Streamer" },
+    { id: "minimal", label: "Minimal" },
+    { id: "neon", label: "Neon" },
+    { id: "midnightPro", label: "Midnight Pro" },
+    { id: "graphite", label: "Graphite" },
+    { id: "nord", label: "Nord" },
+    { id: "oled", label: "OLED" },
+    { id: "pearl", label: "Pearl Light" }
+  ];
+  const active = String(settings?.themePack || "default");
+  return packs
+    .filter((p) => (!needle ? true : `${p.id} ${p.label}`.toLowerCase().includes(needle)))
+    .map((p) => ({
+      kind: "pack",
+      id: `pack:${p.id}`,
+      icon: "layers",
+      title: p.label,
+      sub: "Apply theme pack",
+      meta: p.id === active ? "Active" : "Pack",
+      run: async () => {
+        settings = await window.api.setSettings({ ...settings, themePack: p.id });
+        window.__applyTheme?.(settings);
+        toast(`Pack: ${p.id}`);
+      }
+    }));
+}
+
 function cmdkBuildResults(q) {
   const query = String(q || "").trim().toLowerCase();
   const out = [];
+  const favs = cmdkFavs();
+  const packs = cmdkPackItems(q);
   const cmds = cmdkCommands().filter((c) => {
     if (!query) return true;
     const hay = `${c.title} ${c.sub || ""} ${c.meta || ""}`.toLowerCase();
     return hay.includes(query) || (query.startsWith("@") && c.id === "pack"); // tiny helper: keep pack visible
   });
   const profiles = cmdkProfiles(q);
-  if (cmds.length) out.push({ kind: "section", title: "Commands" }, ...cmds);
+  const favCmds = cmds.filter((c) => favs.has(c.id));
+  const restCmds = cmds.filter((c) => !favs.has(c.id));
+  if (favCmds.length) out.push({ kind: "section", title: "Favorites" }, ...favCmds);
+  if (restCmds.length) out.push({ kind: "section", title: "Commands" }, ...restCmds);
+  if (packs.length) out.push({ kind: "section", title: "Theme packs" }, ...packs);
   if (profiles.length) out.push({ kind: "section", title: "Profiles" }, ...profiles);
   if (!out.length) out.push({ kind: "section", title: "No results" });
   return out.slice(0, 80);
@@ -2090,6 +2201,7 @@ function cmdkRender() {
   const actionable = items.filter((x) => x.kind !== "section");
   cmdkActive = Math.max(0, Math.min(cmdkActive, actionable.length - 1));
   let aIdx = 0;
+  const favs = cmdkFavs();
   list.innerHTML = items
     .map((x) => {
       if (x.kind === "section") return `<div class="cmdkSection">${x.title}</div>`;
@@ -2097,13 +2209,23 @@ function cmdkRender() {
       const id = `cmdk-${x.id || aIdx}`;
       const meta = x.meta ? `<span class="cmdkMeta mono">${x.meta}</span>` : "";
       const sub = x.sub ? `<div class="cmdkSub">${x.sub}</div>` : "";
+      const icon = `<span class="cmdkIcon" aria-hidden="true">${cmdkIconSvg(x.icon)}</span>`;
+      const canFav = x.kind === "cmd" && x.id;
+      const star = canFav
+        ? `<button class="cmdkStar${favs.has(x.id) ? " on" : ""}" type="button" data-fav="${x.id}" aria-label="Favorite">
+             <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+               <path d="M12 17l-5 3 1.2-5.8L4 9.6l5.9-.6L12 3l2.1 6 5.9.6-4.2 4.6L17 20z"></path>
+             </svg>
+           </button>`
+        : "";
       const html = `
         <button class="cmdkItem${active}" type="button" role="option" id="${id}" data-idx="${aIdx}">
+          ${icon}
           <div>
             <div class="cmdkTitle">${x.title}</div>
             ${sub}
           </div>
-          ${meta}
+          <div class="cmdkActions">${star}${meta}</div>
         </button>
       `;
       aIdx++;
@@ -2161,6 +2283,19 @@ document.getElementById("cmdkInput")?.addEventListener("input", () => {
   cmdkRender();
 });
 document.getElementById("cmdkInput")?.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === "f") {
+    // toggle favorite for active command item
+    e.preventDefault();
+    const { input } = cmdkEls();
+    const q = String(input?.value || "");
+    const items = cmdkBuildResults(q).filter((x) => x.kind !== "section");
+    const item = items[cmdkActive];
+    if (item?.kind === "cmd" && item?.id) {
+      cmdkToggleFav(item.id);
+      cmdkRender();
+    }
+    return;
+  }
   if (e.key === "Escape") {
     e.preventDefault();
     cmdkCloseNow();
@@ -2184,6 +2319,17 @@ document.getElementById("cmdkInput")?.addEventListener("keydown", (e) => {
   }
 });
 document.getElementById("cmdkList")?.addEventListener("click", (e) => {
+  const star = e.target.closest("button[data-fav]");
+  if (star) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = star.getAttribute("data-fav");
+    if (id) {
+      cmdkToggleFav(id);
+      cmdkRender();
+    }
+    return;
+  }
   const btn = e.target.closest("button[data-idx]");
   if (!btn) return;
   const idx = Number(btn.getAttribute("data-idx"));
