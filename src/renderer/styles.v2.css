@@ -374,6 +374,88 @@ button.copyChip.copied {
   }
 }
 
+/* Details page: policy interval v2 (more organized) */
+.pageDetails .policyRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.pageDetails .policyLeft {
+  min-width: 0;
+}
+
+.pageDetails .policyMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.pageDetails .policyInputWrap {
+  position: relative;
+  min-width: 0;
+}
+
+.pageDetails .policyInputWrap .input {
+  width: 100%;
+  max-width: none;
+  padding-right: 44px;
+}
+
+.pageDetails .policyUnit {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.pageDetails .policyPresets {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pageDetails .presetBtn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 233, 239, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(232, 233, 239, 0.82);
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 90ms ease;
+}
+
+.pageDetails .presetBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(232, 233, 239, 0.20);
+}
+
+.pageDetails .presetBtn:active {
+  transform: translateY(1px);
+}
+
+.pageDetails .policyBtns {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+@media (max-width: 520px) {
+  .pageDetails .policyRow {
+    grid-template-columns: 1fr;
+  }
+  .pageDetails .policyBtns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 body.checking #activityCard .cardBody,
 body.checking #giftsCard .cardBody,
 body.checking #chartsCard .cardBody {

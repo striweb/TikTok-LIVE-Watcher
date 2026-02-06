@@ -238,6 +238,7 @@ function render() {
     const perMap = settings?.perHostIntervals && typeof settings.perHostIntervals === "object" ? settings.perHostIntervals : {};
     const override = Math.round(Number(perMap[u] || 0));
     const overrideText = override ? String(override) : "";
+    const effectiveMin = override ? override : globalMin;
     const lastErr = st.ok === false ? String(st.error || st.reason || "error").slice(0, 220) : "";
 
     policyBody.innerHTML = `
@@ -245,15 +246,33 @@ function render() {
         <div class="detailsCard">
           <div class="detailsKey">Policy interval</div>
           <div class="detailsVal">
-            <div class="policyInline">
-              <div class="policyInputWrap">
-                <input id="policyOverride" class="input mono" type="number" min="1" max="60" placeholder="${globalMin}" value="${overrideText}" />
-                <span class="policyUnit mono muted">min</span>
+            <div class="policyRow">
+              <div class="policyLeft">
+                <div class="policyMetaRow mono muted">
+                  Global <b class="mono">${globalMin}m</b>
+                  <span class="heroSep">•</span>
+                  Effective <b class="mono">${effectiveMin}m</b>
+                  ${override ? `<span class="heroSep">•</span> Override <b class="mono">${override}m</b>` : ""}
+                </div>
+                <div class="policyInputWrap">
+                  <input id="policyOverride" class="input mono" type="number" min="1" max="60" placeholder="${globalMin}" value="${overrideText}" />
+                  <span class="policyUnit mono muted">min</span>
+                </div>
+                <div class="policyPresets" aria-label="Presets">
+                  <button class="presetBtn" type="button" data-set="1">1m</button>
+                  <button class="presetBtn" type="button" data-set="2">2m</button>
+                  <button class="presetBtn" type="button" data-set="5">5m</button>
+                  <button class="presetBtn" type="button" data-set="10">10m</button>
+                  <button class="presetBtn" type="button" data-set="15">15m</button>
+                  <button class="presetBtn" type="button" data-set="30">30m</button>
+                </div>
               </div>
-              <button id="policySave" class="btn" type="button">Save</button>
-              <button id="policyClear" class="btn ghost" type="button" ${override ? "" : "disabled"}>Use global</button>
+              <div class="policyBtns">
+                <button id="policySave" class="btn primary" type="button">Save</button>
+                <button id="policyClear" class="btn ghost" type="button">Use global</button>
+              </div>
             </div>
-            <div class="hint">Global: ${globalMin}m • Leave empty to use global. Saved only if different.</div>
+            <div class="hint">Tip: empty (or same as global) clears override. Press Enter to save.</div>
           </div>
         </div>
         <div class="detailsCard">
@@ -271,17 +290,56 @@ function render() {
       </div>
     `;
 
-    policyBody.querySelector("#policySave")?.addEventListener("click", async () => {
-      const raw = String(policyBody.querySelector("#policyOverride")?.value || "").trim();
-      const v = raw ? Math.round(Number(raw)) : 0;
-      if (raw && (!Number.isFinite(v) || v < 1 || v > 60)) {
+    const input = policyBody.querySelector("#policyOverride");
+    const saveBtn = policyBody.querySelector("#policySave");
+    const clearBtn = policyBody.querySelector("#policyClear");
+
+    const parseDesired = () => {
+      const raw = String(input?.value || "").trim();
+      if (!raw) return { mode: "clear", raw, v: 0 };
+      const v = Math.round(Number(raw));
+      if (!Number.isFinite(v) || v < 1 || v > 60) return { mode: "invalid", raw, v: 0 };
+      if (v === globalMin) return { mode: "clear", raw, v };
+      return { mode: "set", raw, v };
+    };
+
+    const syncPolicyButtons = () => {
+      const desired = parseDesired();
+      const cur = override || 0;
+      const next = desired.mode === "set" ? desired.v : 0;
+      if (saveBtn) saveBtn.disabled = desired.mode === "invalid" || next === cur;
+      if (clearBtn) clearBtn.disabled = cur === 0;
+    };
+
+    policyBody.querySelectorAll("button.presetBtn[data-set]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const v = Math.round(Number(b.getAttribute("data-set") || 0));
+        if (!Number.isFinite(v) || v < 1 || v > 60) return;
+        if (input) {
+          input.value = String(v);
+          input.focus();
+          input.dispatchEvent(new Event("input"));
+        }
+      });
+    });
+
+    input?.addEventListener("input", () => syncPolicyButtons());
+    input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (saveBtn && !saveBtn.disabled) saveBtn.click();
+      }
+    });
+
+    saveBtn?.addEventListener("click", async () => {
+      const desired = parseDesired();
+      if (desired.mode === "invalid") {
         toast("Invalid interval (1–60).", "bad");
         return;
       }
       const nextMap = { ...(perMap || {}) };
-      if (!raw) delete nextMap[u];
-      else if (v === globalMin) delete nextMap[u];
-      else nextMap[u] = v;
+      if (desired.mode === "clear") delete nextMap[u];
+      else nextMap[u] = desired.v;
 
       try {
         settings = await window.api.setSettings({ ...settings, perHostIntervals: nextMap });
@@ -292,7 +350,8 @@ function render() {
         toast(`Error: ${String(err?.message || err).slice(0, 80)}`, "bad");
       }
     });
-    policyBody.querySelector("#policyClear")?.addEventListener("click", async () => {
+
+    clearBtn?.addEventListener("click", async () => {
       try {
         const nextMap = { ...(perMap || {}) };
         delete nextMap[u];
@@ -304,6 +363,8 @@ function render() {
         toast(`Error: ${String(err?.message || err).slice(0, 80)}`, "bad");
       }
     });
+
+    syncPolicyButtons();
   }
 
   const eventsBody = document.getElementById("eventsBody");
