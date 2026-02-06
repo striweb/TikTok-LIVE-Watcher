@@ -225,13 +225,27 @@ body.resizing * {
   padding: 14px 16px;
   border-bottom: 1px solid rgba(232, 233, 239, 0.10);
   background: color-mix(in srgb, var(--bg1) 72%, transparent);
-  backdrop-filter: blur(20px) saturate(140%);
+  /* Glass (adaptive via styles.v2.css vars when present) */
+  backdrop-filter: blur(var(--glass-blur, 20px)) saturate(var(--glass-sat, 140%));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 20px)) saturate(var(--glass-sat, 140%));
   position: sticky;
   top: 0;
   z-index: 5;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--elev-2, 0 10px 30px rgba(0, 0, 0, 0.18));
   isolation: isolate;
   overflow: visible;
+}
+
+.topbar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .topbar::after {
@@ -252,6 +266,12 @@ body.resizing * {
   animation: underlineFlow 10s linear infinite;
   opacity: 0.65;
   pointer-events: none;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .topbar {
+    background: color-mix(in srgb, var(--bg1) 92%, var(--bg0));
+  }
 }
 
 .topbarLeft {
@@ -1241,6 +1261,21 @@ html[data-density="compact"] .avatar {
   color: var(--text);
   cursor: pointer;
   transition: transform 90ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.iconBtn.ghost {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.iconBtn.primary {
+  border-color: color-mix(in srgb, var(--accent2) 30%, rgba(232, 233, 239, 0.18));
+  background: color-mix(in srgb, var(--accent2) 18%, rgba(255, 255, 255, 0.04));
+}
+
+.iconBtn.danger {
+  border-color: rgba(239, 68, 68, 0.30);
+  background: rgba(239, 68, 68, 0.12);
+  color: rgba(255, 220, 220, 0.98);
 }
 
 .iconBtn:hover {

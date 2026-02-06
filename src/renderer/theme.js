@@ -34,6 +34,7 @@ function applyTheme(settings) {
   const dark = String(settings?.darkVariant || "midnight");
   const layout = String(settings?.dashboardLayout || "default");
   const pack = String(settings?.themePack || "default");
+  const glass = String(settings?.glassIntensity || "med");
 
   document.documentElement.dataset.themeMode = mode;
   document.documentElement.dataset.theme = theme;
@@ -42,6 +43,7 @@ function applyTheme(settings) {
   document.documentElement.dataset.dark = dark;
   document.documentElement.dataset.layout = layout;
   document.documentElement.dataset.pack = pack;
+  document.documentElement.dataset.glass = glass;
 
   ensureSystemThemeListener();
 }

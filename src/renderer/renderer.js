@@ -117,6 +117,41 @@ function isFocusMode() {
 function applyFocusMode(v) {
   writeJsonLS(FOCUS_KEY, Boolean(v));
   document.documentElement.dataset.focus = v ? "1" : "0";
+  renderWorkspaceBadge();
+}
+
+function renderWorkspaceBadge() {
+  const el = document.getElementById("workspaceBadge");
+  if (!el) return;
+  const s = appStatus || {};
+  const now = Date.now();
+  const socketOk = Boolean(s.statusSocketConnected);
+  const until = Number(s.rateLimitedUntil || 0);
+  const inCooldown = Boolean(s.rateLimited) && until > now;
+
+  let text = "Monitoring";
+  let cls = "ok";
+  let title = "Monitoring";
+
+  if (!socketOk) {
+    text = "Degraded";
+    cls = "bad";
+    title = "Degraded: status socket is down";
+  }
+  if (inCooldown) {
+    text = "Cooldown";
+    cls = "warn";
+    title = `Cooldown until ${new Date(until).toLocaleTimeString()}`;
+  }
+  if (isFocusMode()) {
+    text = "Focus";
+    cls = "focus";
+    title = "Focus mode is ON";
+  }
+
+  el.textContent = text;
+  el.className = `workspaceBadge ${cls}`;
+  el.title = title;
 }
 
 const DASH_COLLAPSE_KEY = "dashCollapsedV1";
@@ -1050,17 +1085,39 @@ function setDrawer(open) {
   const drawer = document.getElementById("notifyDrawer");
   const overlay = document.getElementById("drawerOverlay");
   if (!drawer || !overlay) return;
-  drawer.hidden = !open;
-  overlay.hidden = !open;
-  if (open) renderNotifications();
+  clearTimeout(drawer.__hideTimer);
+  clearTimeout(overlay.__hideTimer);
+  if (open) {
+    drawer.hidden = false;
+    overlay.hidden = false;
+    overlay.classList.add("open");
+    requestAnimationFrame(() => drawer.classList.add("open"));
+    renderNotifications();
+    return;
+  }
+  drawer.classList.remove("open");
+  overlay.classList.remove("open");
+  drawer.__hideTimer = setTimeout(() => (drawer.hidden = true), 180);
+  overlay.__hideTimer = setTimeout(() => (overlay.hidden = true), 180);
 }
 
 function setDetailsOpen(open) {
   const drawer = document.getElementById("detailsDrawer");
   const overlay = document.getElementById("detailsOverlay");
   if (!drawer || !overlay) return;
-  drawer.hidden = !open;
-  overlay.hidden = !open;
+  clearTimeout(drawer.__hideTimer);
+  clearTimeout(overlay.__hideTimer);
+  if (open) {
+    drawer.hidden = false;
+    overlay.hidden = false;
+    overlay.classList.add("open");
+    requestAnimationFrame(() => drawer.classList.add("open"));
+    return;
+  }
+  drawer.classList.remove("open");
+  overlay.classList.remove("open");
+  drawer.__hideTimer = setTimeout(() => (drawer.hidden = true), 180);
+  overlay.__hideTimer = setTimeout(() => (overlay.hidden = true), 180);
 }
 
 function openDetails(username) {
@@ -1069,92 +1126,107 @@ function openDetails(username) {
   const st = (state.byUser || {})[u] || { username: u };
   const detailsSub = document.getElementById("detailsSub");
   const detailsBody = document.getElementById("detailsBody");
-  if (detailsSub) detailsSub.textContent = `@${u}`;
   if (!detailsBody) return;
 
   const p = pill(st.isLive);
+  if (detailsSub) detailsSub.textContent = `@${u} • ${p.text}`;
   const recent = (historyAll || []).filter((e) => e.username === u).slice(0, 10);
   const globalMin = Math.max(1, Math.min(60, Math.round(Number(settings?.intervalMinutes || 1))));
   const perMap = settings?.perHostIntervals && typeof settings.perHostIntervals === "object" ? settings.perHostIntervals : {};
   const override = Math.round(Number(perMap[u] || 0));
   const overrideText = override ? String(override) : "";
+  const lastLiveSeen = st.lastLiveSeenAt ? `${formatDate(st.lastLiveSeenAt)} ${formatTime(st.lastLiveSeenAt)}` : "—";
+  const lastCheck = formatTime(st.checkedAt);
+  const nextDue = st.nextDueAt ? `${formatTime(st.nextDueAt)}` : "—";
+  const viewers = Number.isFinite(Number(st.viewerCount)) ? Math.round(Number(st.viewerCount)) : "—";
+  const room = st.roomId ? String(st.roomId) : "—";
+  const lastErr = st.ok === false ? String(st.error || st.reason || "error").slice(0, 140) : "—";
   detailsBody.innerHTML = `
-    <div class="detailsSplit">
-      <div class="detailsLeft">
-        <div class="detailsGrid">
-      <div class="detailsCard">
-        <div class="detailsKey">Status</div>
-        <div class="detailsVal"><span class="pill ${p.cls}">${p.text}</span></div>
-      </div>
-      <div class="detailsCard">
-        <div class="detailsKey">Last check</div>
-        <div class="detailsVal mono">${formatTime(st.checkedAt)}</div>
-      </div>
-      <div class="detailsCard">
-        <div class="detailsKey">Last LIVE seen</div>
-        <div class="detailsVal mono">${st.lastLiveSeenAt ? `${formatDate(st.lastLiveSeenAt)} ${formatTime(st.lastLiveSeenAt)}` : "—"}</div>
-      </div>
-      <div class="detailsCard">
-        <div class="detailsKey">Policy interval</div>
-        <div class="detailsVal">
-          <div class="policyInline">
-            <input id="policyOverride" class="input mono" type="number" min="1" max="60" placeholder="${globalMin}" value="${overrideText}" />
-            <button id="policySave" class="btn" type="button">Save</button>
-            <button id="policyClear" class="btn ghost" type="button" ${override ? "" : "disabled"}>Use global</button>
+    <div class="detailsHero">
+      <div class="heroAvatar" style="${avatarStyle(u)}">${avatarLetter(u)}</div>
+      <div class="heroMain">
+        <div class="heroTop">
+          <div class="heroUser">@${u}</div>
+          <span class="pill ${p.cls} heroPill">${p.text}</span>
+        </div>
+        <div class="heroSub muted">
+          Last LIVE seen: <span class="mono">${lastLiveSeen}</span>
+          <span class="heroSep">•</span>
+          Last check: <span class="mono">${lastCheck}</span>
+        </div>
+        <div class="heroStats">
+          <div class="heroStat">
+            <div class="heroK">Viewers</div>
+            <div class="heroV mono">${viewers}</div>
           </div>
-          <div class="hint">Global: ${globalMin}m • Leave empty to use global. Saved only if different.</div>
+          <div class="heroStat">
+            <div class="heroK">Room</div>
+            <div class="heroV mono">${room}</div>
+          </div>
+          <div class="heroStat">
+            <div class="heroK">Next due</div>
+            <div class="heroV mono">${nextDue}</div>
+          </div>
         </div>
       </div>
-      <div class="detailsCard">
-        <div class="detailsKey">Next due</div>
-        <div class="detailsVal mono">${st.nextDueAt ? `${formatTime(st.nextDueAt)}` : "—"}</div>
+      <div class="detailsActions heroActions">
+        <button class="iconBtn hasTip" type="button" id="detailsChat" data-tip="Chat" aria-label="Chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
+          </svg>
+        </button>
+        <button class="iconBtn hasTip" type="button" id="detailsOverlayBtn" data-tip="Overlay" aria-label="Overlay">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <path d="M14 3h7v7"></path>
+            <path d="M10 14L21 3"></path>
+            <path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"></path>
+          </svg>
+        </button>
+        <button class="iconBtn hasTip" type="button" id="detailsJoin" data-tip="Join Tracker" aria-label="Join Tracker">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <circle cx="12" cy="7" r="3"></circle>
+            <path d="M5.5 21a6.5 6.5 0 0 1 13 0"></path>
+            <path d="M19 8v6"></path>
+            <path d="M22 11h-6"></path>
+          </svg>
+        </button>
+        <button class="iconBtn hasTip" type="button" id="detailsHistory" data-tip="History" aria-label="History">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+            <path d="M3 3v5h5"></path>
+            <path d="M3.05 13a9 9 0 1 0 .5-4.5L3 8"></path>
+            <path d="M12 7v6l4 2"></path>
+          </svg>
+        </button>
       </div>
-      <div class="detailsCard">
-        <div class="detailsKey">Room</div>
-        <div class="detailsVal mono">${st.roomId ? String(st.roomId) : "—"}</div>
-      </div>
-      <div class="detailsCard">
-        <div class="detailsKey">Viewers</div>
-        <div class="detailsVal mono">${
-          Number.isFinite(Number(st.viewerCount)) ? Math.round(Number(st.viewerCount)) : "—"
-        }</div>
-      </div>
-      <div class="detailsCard">
-        <div class="detailsKey">Last error</div>
-        <div class="detailsVal mono">${st.ok === false ? String(st.error || st.reason || "error").slice(0, 140) : "—"}</div>
-      </div>
-        </div>
-
-    <div class="detailsActions">
-      <button class="iconBtn hasTip" type="button" id="detailsChat" data-tip="Chat" aria-label="Chat">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
-        </svg>
-      </button>
-      <button class="iconBtn hasTip" type="button" id="detailsOverlayBtn" data-tip="Overlay" aria-label="Overlay">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <path d="M14 3h7v7"></path>
-          <path d="M10 14L21 3"></path>
-          <path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"></path>
-        </svg>
-      </button>
-      <button class="iconBtn hasTip" type="button" id="detailsJoin" data-tip="Join Tracker" aria-label="Join Tracker">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <circle cx="12" cy="7" r="3"></circle>
-          <path d="M5.5 21a6.5 6.5 0 0 1 13 0"></path>
-          <path d="M19 8v6"></path>
-          <path d="M22 11h-6"></path>
-        </svg>
-      </button>
-      <button class="iconBtn hasTip" type="button" id="detailsHistory" data-tip="History" aria-label="History">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <path d="M3 3v5h5"></path>
-          <path d="M3.05 13a9 9 0 1 0 .5-4.5L3 8"></path>
-          <path d="M12 7v6l4 2"></path>
-        </svg>
-      </button>
     </div>
 
+    <div class="detailsSplit">
+      <div class="detailsLeft">
+        <div class="detailsGrid detailsGridV3">
+          <div class="detailsCard">
+            <div class="detailsKey">Policy interval</div>
+            <div class="detailsVal">
+              <div class="policyInline">
+                <input id="policyOverride" class="input mono" type="number" min="1" max="60" placeholder="${globalMin}" value="${overrideText}" />
+                <button id="policySave" class="btn" type="button">Save</button>
+                <button id="policyClear" class="btn ghost" type="button" ${override ? "" : "disabled"}>Use global</button>
+              </div>
+              <div class="hint">Global: ${globalMin}m • Leave empty to use global. Saved only if different.</div>
+            </div>
+          </div>
+          <div class="detailsCard">
+            <div class="detailsKey">Last error</div>
+            <div class="detailsVal mono">${lastErr}</div>
+          </div>
+          <div class="detailsCard">
+            <div class="detailsKey">LIVE started</div>
+            <div class="detailsVal mono">${st.lastLiveStartedAt ? `${formatDate(st.lastLiveStartedAt)} ${formatTime(st.lastLiveStartedAt)}` : "—"}</div>
+          </div>
+          <div class="detailsCard">
+            <div class="detailsKey">LIVE ended</div>
+            <div class="detailsVal mono">${st.lastLiveEndedAt ? `${formatDate(st.lastLiveEndedAt)} ${formatTime(st.lastLiveEndedAt)}` : "—"}</div>
+          </div>
+        </div>
       </div>
 
       <div class="detailsRight">
@@ -1562,6 +1634,8 @@ function renderHealthBadges() {
     chipCooldown.classList.add("warn");
     chipCooldown.title = `Rate limit cooldown until ${new Date(until).toLocaleTimeString()}`;
   }
+
+  renderWorkspaceBadge();
 }
 
 function densityLabel(d) {
@@ -1637,8 +1711,16 @@ function setAppMenuOpen(open) {
   const pop = document.getElementById("appMenu");
   const btn = document.getElementById("appMenuBtn");
   if (!pop || !btn) return;
-  pop.hidden = !open;
-  btn.setAttribute("aria-expanded", open ? "true" : "false");
+  clearTimeout(pop.__hideTimer);
+  if (open) {
+    pop.hidden = false;
+    requestAnimationFrame(() => pop.classList.add("open"));
+    btn.setAttribute("aria-expanded", "true");
+    return;
+  }
+  pop.classList.remove("open");
+  btn.setAttribute("aria-expanded", "false");
+  pop.__hideTimer = setTimeout(() => (pop.hidden = true), 160);
 }
 
 function isAppMenuOpen() {
@@ -1759,7 +1841,15 @@ document.getElementById("markAllRead").addEventListener("click", async () => {
 });
 
 document.getElementById("markTabRead")?.addEventListener("click", async () => {
-  const latestTs = Math.max(0, ...getNotifyEvents(notifyTab).map((e) => e?.ts || 0));
+  const tabEvents = getNotifyEvents(notifyTab);
+  const latestTs = Math.max(0, ...tabEvents.map((e) => e?.ts || 0));
+  const unread = computeUnreadCountFor(tabEvents);
+  if (unread > 0) {
+    const label =
+      notifyTab === "all" ? "All" : notifyTab === "live" ? "LIVE" : notifyTab === "joins" ? "Joins" : notifyTab === "gifts" ? "Gifts" : "Warnings";
+    const ok = confirm(`Mark ${unread} notification(s) as read in "${label}"?`);
+    if (!ok) return;
+  }
   try {
     const res = await window.api.markNotificationsRead(latestTs || Date.now());
     notifLastReadAt = Number(res?.lastReadAt || latestTs || Date.now()) || 0;

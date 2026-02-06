@@ -66,6 +66,7 @@ const DEFAULTS = {
   themeMode: "system",
   darkVariant: "midnight",
   themePack: "default",
+  glassIntensity: "med",
   accent: "violet",
   density: "comfortable",
   dashboardView: "kanban",
@@ -448,8 +449,26 @@ function normalizeDarkVariant(v) {
 
 function normalizeThemePack(v) {
   const t = String(v || "").trim();
-  if (t === "default" || t === "ops" || t === "streamer" || t === "minimal" || t === "neon" || t === "midnightPro") return t;
+  if (
+    t === "default" ||
+    t === "ops" ||
+    t === "streamer" ||
+    t === "minimal" ||
+    t === "neon" ||
+    t === "midnightPro" ||
+    t === "graphite" ||
+    t === "nord" ||
+    t === "oled" ||
+    t === "pearl"
+  )
+    return t;
   return DEFAULTS.themePack;
+}
+
+function normalizeGlassIntensity(v) {
+  const t = String(v || "").trim();
+  if (t === "low" || t === "med" || t === "high") return t;
+  return DEFAULTS.glassIntensity;
 }
 
 function normalizeAccent(v) {
@@ -513,6 +532,7 @@ function getSettings() {
     themeMode: normalizeThemeMode(store.get("themeMode")),
     darkVariant: normalizeDarkVariant(store.get("darkVariant")),
     themePack: normalizeThemePack(store.get("themePack")),
+    glassIntensity: normalizeGlassIntensity(store.get("glassIntensity")),
     accent: normalizeAccent(store.get("accent")),
     density: normalizeDensity(store.get("density")),
     dashboardView: normalizeDashboardView(store.get("dashboardView")),
@@ -539,6 +559,7 @@ function setSettings(next) {
     themeMode: normalizeThemeMode(next.themeMode),
     darkVariant: normalizeDarkVariant(next.darkVariant),
     themePack: normalizeThemePack(next.themePack),
+    glassIntensity: normalizeGlassIntensity(next.glassIntensity),
     accent: normalizeAccent(next.accent),
     density: normalizeDensity(next.density),
     dashboardView: normalizeDashboardView(next.dashboardView),

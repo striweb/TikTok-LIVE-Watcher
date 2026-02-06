@@ -14,6 +14,7 @@ const DEFAULTS = {
   themeMode: "system",
   darkVariant: "midnight",
   themePack: "default",
+  glassIntensity: "med",
   accent: "violet",
   density: "comfortable",
   dashboardView: "kanban",
@@ -60,8 +61,30 @@ function normalizeDarkVariant(v) {
 
 function normalizeThemePack(v) {
   const t = String(v || "").trim();
-  if (t === "default" || t === "ops" || t === "streamer" || t === "minimal" || t === "neon" || t === "midnightPro") return t;
+  // Back-compat aliases (older UI values)
+  if (t === "pearlLight") return "pearl";
+  if (
+    t === "default" ||
+    t === "ops" ||
+    t === "streamer" ||
+    t === "minimal" ||
+    t === "neon" ||
+    t === "midnightPro" ||
+    t === "graphite" ||
+    t === "nord" ||
+    t === "oled" ||
+    t === "pearl"
+  )
+    return t;
   return DEFAULTS.themePack;
+}
+
+function normalizeGlassIntensity(v) {
+  const t = String(v || "").trim();
+  // Back-compat alias (older UI values)
+  if (t === "medium") return "med";
+  if (t === "low" || t === "med" || t === "high") return t;
+  return DEFAULTS.glassIntensity;
 }
 
 function normalizeAccent(v) {
@@ -199,6 +222,7 @@ async function load() {
   document.getElementById("themeMode").value = normalizeThemeMode(settings.themeMode);
   document.getElementById("darkVariant").value = normalizeDarkVariant(settings.darkVariant);
   document.getElementById("themePack").value = normalizeThemePack(settings.themePack);
+  document.getElementById("glassIntensity").value = normalizeGlassIntensity(settings.glassIntensity);
   document.getElementById("accent").value = normalizeAccent(settings.accent);
   document.getElementById("density").value = normalizeDensity(settings.density);
   document.getElementById("dashboardView").value = normalizeDashboardView(settings.dashboardView);
@@ -238,6 +262,7 @@ async function save() {
     themeMode: normalizeThemeMode(document.getElementById("themeMode").value),
     darkVariant: normalizeDarkVariant(document.getElementById("darkVariant").value),
     themePack: normalizeThemePack(document.getElementById("themePack").value),
+    glassIntensity: normalizeGlassIntensity(document.getElementById("glassIntensity").value),
     accent: normalizeAccent(document.getElementById("accent").value),
     density: normalizeDensity(document.getElementById("density").value),
     dashboardView: normalizeDashboardView(document.getElementById("dashboardView").value),
@@ -384,6 +409,7 @@ window.api.onSettingsUpdated((s) => {
   document.getElementById("themeMode").value = normalizeThemeMode(settings.themeMode);
   document.getElementById("darkVariant").value = normalizeDarkVariant(settings.darkVariant);
   document.getElementById("themePack").value = normalizeThemePack(settings.themePack);
+  document.getElementById("glassIntensity").value = normalizeGlassIntensity(settings.glassIntensity);
   document.getElementById("accent").value = normalizeAccent(settings.accent);
   document.getElementById("density").value = normalizeDensity(settings.density);
   document.getElementById("dashboardView").value = normalizeDashboardView(settings.dashboardView);
