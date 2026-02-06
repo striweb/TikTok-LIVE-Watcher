@@ -329,6 +329,11 @@ body.checking #chartsCard .cardBody::after {
 }
 
 
+#detailsDrawer.drawer {
+  width: min(560px, 96vw);
+}
+
+
 .cardHeader {
   display: flex;
   align-items: center;
