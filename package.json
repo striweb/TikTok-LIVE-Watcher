@@ -6,32 +6,25 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron .",
-    "ui:dev": "vite --config vite.react.config.js",
-    "ui:build": "vite build --config vite.react.config.js",
     "pack": "electron-builder --dir",
-    "dist": "npm run ui:build && electron-builder",
-    "dist:mac": "npm run ui:build && electron-builder --mac --universal",
-    "dist:mac:intel": "npm run ui:build && electron-builder --mac --x64",
-    "dist:mac:apple": "npm run ui:build && electron-builder --mac --arm64",
-    "dist:win": "npm run ui:build && electron-builder --win",
-    "dist:linux": "npm run ui:build && electron-builder --linux"
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac --universal",
+    "dist:mac:intel": "electron-builder --mac --x64",
+    "dist:mac:apple": "electron-builder --mac --arm64",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@tanstack/react-table": "^8.21.3",
     "electron-store": "^11.0.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.6.0",
     "electron": "^40.1.0",
-    "electron-builder": "^26.0.12",
-    "vite": "^6.3.0"
+    "electron-builder": "^26.0.12"
   },
   "build": {
     "appId": "com.tiktoklivewatcher.app",
