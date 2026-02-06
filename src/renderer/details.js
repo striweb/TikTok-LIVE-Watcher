@@ -172,7 +172,6 @@ function render() {
   const heroCard = document.getElementById("detailsHeroCard");
   if (heroCard) {
     const viewers = Number.isFinite(Number(st.viewerCount)) ? Math.round(Number(st.viewerCount)) : "—";
-    const room = st.roomId ? String(st.roomId) : "";
     const nextDue = st.nextDueAt ? `${formatTime(st.nextDueAt)}` : "—";
     const checked = st.checkedAt ? `${relTime(st.checkedAt)} • ${formatTime(st.checkedAt)}` : "—";
     const lastLiveSeen = st.lastLiveSeenAt ? `${formatDate(st.lastLiveSeenAt)} ${formatTime(st.lastLiveSeenAt)}` : "—";
@@ -205,16 +204,6 @@ function render() {
             <div class="heroStat heroStatBig">
               <div class="heroK">Viewers</div>
               <div class="heroV mono">${safeText(viewers)}</div>
-            </div>
-            <div class="heroStat">
-              <div class="heroK">Room</div>
-              <div class="heroV mono">
-                ${
-                  room
-                    ? `<button class="copyChip mono" type="button" data-copy="${safeText(room)}" data-tip="Copy roomId" aria-label="Copy roomId">${safeText(room)}</button>`
-                    : `<span class="muted">—</span>`
-                }
-              </div>
             </div>
             <div class="heroStat">
               <div class="heroK">Next due</div>
@@ -257,7 +246,10 @@ function render() {
           <div class="detailsKey">Policy interval</div>
           <div class="detailsVal">
             <div class="policyInline">
-              <input id="policyOverride" class="input mono" type="number" min="1" max="60" placeholder="${globalMin}" value="${overrideText}" />
+              <div class="policyInputWrap">
+                <input id="policyOverride" class="input mono" type="number" min="1" max="60" placeholder="${globalMin}" value="${overrideText}" />
+                <span class="policyUnit mono muted">min</span>
+              </div>
               <button id="policySave" class="btn" type="button">Save</button>
               <button id="policyClear" class="btn ghost" type="button" ${override ? "" : "disabled"}>Use global</button>
             </div>

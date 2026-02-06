@@ -331,6 +331,49 @@ button.copyChip.copied {
   max-width: 42vw;
 }
 
+/* Details page: premium policy row layout */
+.pageDetails .policyInline {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+.pageDetails .policyInline .input {
+  width: 100%;
+  max-width: none;
+  padding-right: 44px;
+}
+.pageDetails .policyInputWrap {
+  position: relative;
+  min-width: 0;
+}
+.pageDetails .policyUnit {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+@media (max-width: 520px) {
+  .pageDetails .policyInline {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "in in"
+      "save clear";
+  }
+  .pageDetails .policyInputWrap {
+    grid-area: in;
+  }
+  .pageDetails #policySave {
+    grid-area: save;
+  }
+  .pageDetails #policyClear {
+    grid-area: clear;
+  }
+}
+
 body.checking #activityCard .cardBody,
 body.checking #giftsCard .cardBody,
 body.checking #chartsCard .cardBody {
