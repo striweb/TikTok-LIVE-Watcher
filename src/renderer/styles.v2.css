@@ -295,7 +295,8 @@ button.copyChip.copied {
   gap: 8px;
 }
 .policyInline .input {
-  max-width: 110px;
+  width: 150px;
+  max-width: 42vw;
 }
 
 body.checking #activityCard .cardBody,
