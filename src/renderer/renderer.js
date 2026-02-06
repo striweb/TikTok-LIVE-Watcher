@@ -334,6 +334,7 @@ function updateKanbanCard(card, st) {
   card.classList.toggle("sev-error", st?.ok === false);
   card.classList.toggle("sevPulse", shouldSevPulse(st));
   card.dataset.user = st.username;
+  card.style.setProperty("--sevA", sevAlphaFor(st));
   card.innerHTML = `
     <div class="profileCell">
       <span class="avatar" style="${avatarStyle(st.username)}" aria-hidden="true">${avatarLetter(st.username)}</span>
@@ -535,6 +536,40 @@ function shouldSevPulse(st) {
   return now - ts < 25 * 1000;
 }
 
+function sevAlphaFor(st) {
+  if (st?.ok === false) return "100%";
+  const c = String(st?.confidence || "").toLowerCase();
+  if (c === "high") return "100%";
+  if (c === "medium") return "78%";
+  if (c === "low") return "58%";
+  return "70%";
+}
+
+function sparkFromSeries(series, days = 14) {
+  try {
+    const vals = Array.isArray(series?.vals) ? series.vals.slice(-days) : [];
+    const max = Math.max(1, ...vals.map((v) => Number(v || 0)));
+    const bars = vals
+      .map((v) => {
+        const n = Math.max(0, Number(v || 0));
+        const h = Math.max(0.06, Math.min(1, n / max));
+        return `<span class="sparkBar" style="--h:${h}"></span>`;
+      })
+      .join("");
+    return `<span class="spark" aria-hidden="true">${bars}</span>`;
+  } catch {
+    return "";
+  }
+}
+
+function deltaText(today, yesterday) {
+  const a = Number(today || 0);
+  const b = Number(yesterday || 0);
+  const d = a - b;
+  if (!Number.isFinite(d) || d === 0) return { cls: "", text: "±0" };
+  return d > 0 ? { cls: "up", text: `+${d}` } : { cls: "down", text: `${d}` };
+}
+
 function updateStatusSegmented() {
   const wrap = document.querySelector(".statusSeg");
   if (!wrap) return;
@@ -556,6 +591,14 @@ function renderKPIs() {
   const watchEl = document.getElementById("kpiWatching");
   const giftsEl = document.getElementById("kpiGifts");
   const errEl = document.getElementById("kpiErrors");
+  const liveDeltaEl = document.getElementById("kpiLiveDelta");
+  const watchDeltaEl = document.getElementById("kpiWatchingDelta");
+  const giftsDeltaEl = document.getElementById("kpiGiftsDelta");
+  const errDeltaEl = document.getElementById("kpiErrorsDelta");
+  const liveSparkEl = document.getElementById("kpiLiveSpark");
+  const watchSparkEl = document.getElementById("kpiWatchingSpark");
+  const giftsSparkEl = document.getElementById("kpiGiftsSpark");
+  const errSparkEl = document.getElementById("kpiErrorsSpark");
   const card = document.getElementById("kpiCard");
   if (!liveEl || !watchEl || !giftsEl || !errEl || !card) return;
 
@@ -572,6 +615,38 @@ function renderKPIs() {
   animateNumberText(watchEl, watchingCount);
   animateNumberText(giftsEl, giftsToday);
   animateNumberText(errEl, errorsToday);
+
+  // KPI v2: deltas + sparklines (today vs yesterday, 14d spark)
+  const gifts14 = buildSeries("gift_sent", 14);
+  const errs14 = buildSeries("error", 14);
+  const joins14 = buildSeries("viewer_joined", 14);
+  const liveStarts14 = buildSeries("live_started", 14);
+
+  const todayVal = (s) => (Array.isArray(s?.vals) && s.vals.length ? Number(s.vals[s.vals.length - 1] || 0) : 0);
+  const yVal = (s) => (Array.isArray(s?.vals) && s.vals.length > 1 ? Number(s.vals[s.vals.length - 2] || 0) : 0);
+
+  const dG = deltaText(todayVal(gifts14), yVal(gifts14));
+  const dE = deltaText(todayVal(errs14), yVal(errs14));
+  const dJ = deltaText(todayVal(joins14), yVal(joins14));
+  const dL = deltaText(todayVal(liveStarts14), yVal(liveStarts14));
+
+  const applyDelta = (el, d, title) => {
+    if (!el) return;
+    el.classList.toggle("up", d.cls === "up");
+    el.classList.toggle("down", d.cls === "down");
+    el.textContent = d.text;
+    if (title) el.title = title;
+  };
+
+  applyDelta(liveDeltaEl, dL, "LIVE starts Δ today vs yesterday");
+  applyDelta(watchDeltaEl, dJ, "Joins Δ today vs yesterday");
+  applyDelta(giftsDeltaEl, dG, "Gifts Δ today vs yesterday");
+  applyDelta(errDeltaEl, dE, "Errors Δ today vs yesterday");
+
+  if (liveSparkEl) liveSparkEl.innerHTML = sparkFromSeries(liveStarts14, 14);
+  if (watchSparkEl) watchSparkEl.innerHTML = sparkFromSeries(joins14, 14);
+  if (giftsSparkEl) giftsSparkEl.innerHTML = sparkFromSeries(gifts14, 14);
+  if (errSparkEl) errSparkEl.innerHTML = sparkFromSeries(errs14, 14);
 }
 
 function renderStatus() {
@@ -625,6 +700,9 @@ function renderStatus() {
   const liveCount = Object.values(byUser).filter((x) => x?.isLive === true).length;
   const unknownCount = Object.values(byUser).filter((x) => x?.isLive == null).length;
   const errorCount = Object.values(byUser).filter((x) => x?.ok === false).length;
+  try {
+    document.documentElement.dataset.live = liveCount > 0 ? "1" : "0";
+  } catch {}
   const lastTs = Math.max(0, ...Object.values(byUser).map((x) => Number(x?.checkedAt || 0) || 0));
   setProMeta("statusProMeta", [
     { cls: "ok", text: `Updated ${lastTs ? relAge(lastTs) : "—"} ago`, title: lastTs ? new Date(lastTs).toLocaleString() : "" },
@@ -725,6 +803,7 @@ function renderStatus() {
     const row = document.createElement("div");
     row.className = `statusRow animIn ${severityClassFor(st)}${shouldSevPulse(st) ? " sevPulse" : ""}`;
     row.dataset.user = st.username;
+    row.style.setProperty("--sevA", sevAlphaFor(st));
     row.innerHTML = `
       <div class="profileCell">
         <span class="avatar" style="${avatarStyle(st.username)}" aria-hidden="true">${avatarLetter(st.username)}</span>
