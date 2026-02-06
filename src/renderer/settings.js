@@ -4,9 +4,9 @@ const DEFAULTS = {
   perHostIntervals: {},
   joinNotify: true,
   joinNotifyCooldownMinutes: 10,
-  autoTrackAllLive: false,
+  autoTrackAllLive: true,
   giftTrack: true,
-  giftNotify: false,
+  giftNotify: true,
   giftNotifyCooldownSeconds: 60,
   soundEnabled: true,
   soundType: "chime",
@@ -15,7 +15,7 @@ const DEFAULTS = {
   darkVariant: "midnight",
   accent: "violet",
   density: "comfortable",
-  dashboardView: "table",
+  dashboardView: "kanban",
   obsParams:
     "showLikes=1&showChats=1&showGifts=1&showFollows=1&showJoins=1&bgColor=rgb(24,23,28)&fontColor=rgb(227,229,235)&fontSize=1.3em"
 };
