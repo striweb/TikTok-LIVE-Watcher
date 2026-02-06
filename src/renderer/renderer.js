@@ -983,6 +983,7 @@ function renderNotifications() {
   };
 
   let lastDay = "";
+  let stackIdx = 0;
   for (const n of events) {
     const curDay = n?.ts ? dayLabel(n.ts) : "—";
     if (curDay !== lastDay) {
@@ -993,6 +994,8 @@ function renderNotifications() {
       list.appendChild(h);
     }
     const row = document.createElement("div");
+    row.style.setProperty("--stack", String(Math.max(0, 10 - stackIdx)));
+    stackIdx++;
     const unread = (n?.ts || 0) > (notifLastReadAt || 0);
     row.className = `notifyItem animIn${unread ? " unread" : ""}`;
     const type = n.type || "event";
@@ -1911,6 +1914,284 @@ function hideTopSuggest() {
   pop.innerHTML = "";
 }
 
+// Command palette (Ctrl+K)
+let cmdkOpen = false;
+let cmdkActive = 0;
+let cmdkLastFocus = null;
+
+function cmdkEls() {
+  return {
+    overlay: document.getElementById("cmdkOverlay"),
+    input: document.getElementById("cmdkInput"),
+    list: document.getElementById("cmdkList")
+  };
+}
+
+function cmdkCommands() {
+  const pack = String(settings?.themePack || "default");
+  const glass = String(settings?.glassIntensity || "med");
+  const themeMode = String(settings?.themeMode || "system");
+  const density = String(settings?.density || "comfortable");
+
+  return [
+    {
+      kind: "cmd",
+      id: "openSettings",
+      title: "Open Settings",
+      sub: "Profiles, themes, monitoring",
+      meta: "Popup",
+      run: async () => await window.api.openSettingsPopup()
+    },
+    { kind: "cmd", id: "openHistory", title: "Open History", sub: "Logs and exports", meta: "Popup", run: async () => await window.api.openHistoryPopup() },
+    {
+      kind: "cmd",
+      id: "openJoin",
+      title: "Open Join Tracker",
+      sub: "Watch viewers & gifts",
+      meta: "Popup",
+      run: async () => await window.api.openJoinTrackerPopup(null)
+    },
+    {
+      kind: "cmd",
+      id: "toggleFocus",
+      title: "Toggle Focus mode",
+      sub: "Hide extra dashboard cards",
+      meta: isFocusMode() ? "ON" : "OFF",
+      run: async () => {
+        applyFocusMode(!isFocusMode());
+        toast(isFocusMode() ? "Focus mode: ON" : "Focus mode: OFF");
+      }
+    },
+    {
+      kind: "cmd",
+      id: "openNotifications",
+      title: "Open Notifications",
+      sub: "Grouped by day",
+      meta: "Drawer",
+      run: async () => setDrawer(true)
+    },
+    {
+      kind: "cmd",
+      id: "checkNow",
+      title: "Check now",
+      sub: "Run an immediate status check",
+      meta: "Run",
+      run: async () => document.getElementById("checkNow")?.click()
+    },
+    {
+      kind: "cmd",
+      id: "themeMode",
+      title: `Theme mode: ${themeMode}`,
+      sub: "Cycle system → dark → light",
+      meta: "Theme",
+      run: async () => {
+        const next = themeMode === "system" ? "dark" : themeMode === "dark" ? "light" : "system";
+        settings = await window.api.setSettings({ ...settings, themeMode: next });
+        window.__applyTheme?.(settings);
+        toast(`Theme mode: ${next}`);
+      }
+    },
+    {
+      kind: "cmd",
+      id: "density",
+      title: `Density: ${density}`,
+      sub: "Cycle comfortable → compact → ultra",
+      meta: "UI",
+      run: async () => {
+        const next = density === "comfortable" ? "compact" : density === "compact" ? "ultra" : "comfortable";
+        settings = await window.api.setSettings({ ...settings, density: next });
+        window.__applyTheme?.(settings);
+        updateDensityToggle();
+        toast(`Density: ${next}`);
+      }
+    },
+    {
+      kind: "cmd",
+      id: "glass",
+      title: `Glass: ${glass}`,
+      sub: "Cycle low → med → high",
+      meta: "Appearance",
+      run: async () => {
+        const next = glass === "low" ? "med" : glass === "med" ? "high" : "low";
+        settings = await window.api.setSettings({ ...settings, glassIntensity: next });
+        window.__applyTheme?.(settings);
+        toast(`Glass: ${next}`);
+      }
+    },
+    {
+      kind: "cmd",
+      id: "pack",
+      title: `Theme pack: ${pack}`,
+      sub: "Cycle packs (affects radius/spacing)",
+      meta: "Pack",
+      run: async () => {
+        const packs = ["default", "ops", "streamer", "minimal", "neon", "midnightPro", "graphite", "nord", "oled", "pearl"];
+        const i = Math.max(0, packs.indexOf(pack));
+        const next = packs[(i + 1) % packs.length];
+        settings = await window.api.setSettings({ ...settings, themePack: next });
+        window.__applyTheme?.(settings);
+        toast(`Pack: ${next}`);
+      }
+    }
+  ];
+}
+
+function cmdkProfiles(q) {
+  const query = String(q || "").trim().toLowerCase().replace(/^@+/, "");
+  const items = [];
+  const seen = new Set();
+  for (const u of usernamesState || []) {
+    if (query && !u.includes(query)) continue;
+    seen.add(u);
+    items.push({
+      kind: "profile",
+      id: `p:${u}`,
+      title: `@${u}`,
+      sub: "Open Details",
+      meta: "Details",
+      run: async () => openDetails(u)
+    });
+  }
+  for (const w of watchUsersState || []) {
+    if (seen.has(w)) continue;
+    if (query && !w.includes(query)) continue;
+    items.push({
+      kind: "watch",
+      id: `w:${w}`,
+      title: `@${w}`,
+      sub: "Watching (Join Tracker)",
+      meta: "Watching",
+      run: async () => openDetails(w)
+    });
+  }
+  return items;
+}
+
+function cmdkBuildResults(q) {
+  const query = String(q || "").trim().toLowerCase();
+  const out = [];
+  const cmds = cmdkCommands().filter((c) => {
+    if (!query) return true;
+    const hay = `${c.title} ${c.sub || ""} ${c.meta || ""}`.toLowerCase();
+    return hay.includes(query) || (query.startsWith("@") && c.id === "pack"); // tiny helper: keep pack visible
+  });
+  const profiles = cmdkProfiles(q);
+  if (cmds.length) out.push({ kind: "section", title: "Commands" }, ...cmds);
+  if (profiles.length) out.push({ kind: "section", title: "Profiles" }, ...profiles);
+  if (!out.length) out.push({ kind: "section", title: "No results" });
+  return out.slice(0, 80);
+}
+
+function cmdkRender() {
+  const { list, input } = cmdkEls();
+  if (!list || !input) return;
+  const q = String(input.value || "");
+  const items = cmdkBuildResults(q);
+  const actionable = items.filter((x) => x.kind !== "section");
+  cmdkActive = Math.max(0, Math.min(cmdkActive, actionable.length - 1));
+  let aIdx = 0;
+  list.innerHTML = items
+    .map((x) => {
+      if (x.kind === "section") return `<div class="cmdkSection">${x.title}</div>`;
+      const active = aIdx === cmdkActive ? " active" : "";
+      const id = `cmdk-${x.id || aIdx}`;
+      const meta = x.meta ? `<span class="cmdkMeta mono">${x.meta}</span>` : "";
+      const sub = x.sub ? `<div class="cmdkSub">${x.sub}</div>` : "";
+      const html = `
+        <button class="cmdkItem${active}" type="button" role="option" id="${id}" data-idx="${aIdx}">
+          <div>
+            <div class="cmdkTitle">${x.title}</div>
+            ${sub}
+          </div>
+          ${meta}
+        </button>
+      `;
+      aIdx++;
+      return html;
+    })
+    .join("");
+}
+
+function cmdkOpenNow() {
+  const { overlay, input, list } = cmdkEls();
+  if (!overlay || !input || !list) return;
+  hideTopSuggest();
+  cmdkLastFocus = document.activeElement;
+  overlay.hidden = false;
+  cmdkOpen = true;
+  cmdkActive = 0;
+  input.value = "";
+  cmdkRender();
+  input.focus();
+  input.select?.();
+}
+
+function cmdkCloseNow() {
+  const { overlay } = cmdkEls();
+  if (!overlay) return;
+  overlay.hidden = true;
+  cmdkOpen = false;
+  const prev = cmdkLastFocus;
+  cmdkLastFocus = null;
+  if (prev && typeof prev.focus === "function") prev.focus();
+}
+
+async function cmdkRunActive() {
+  const { input } = cmdkEls();
+  if (!input) return;
+  const q = String(input.value || "");
+  const items = cmdkBuildResults(q).filter((x) => x.kind !== "section");
+  const item = items[cmdkActive];
+  if (!item || typeof item.run !== "function") return;
+  cmdkCloseNow();
+  try {
+    await item.run();
+  } catch (err) {
+    setStatus(`Error: ${String(err?.message || err).slice(0, 80)}`);
+  }
+}
+
+document.getElementById("cmdkOverlay")?.addEventListener("click", (e) => {
+  const modal = e.target?.closest?.(".cmdk");
+  if (modal) return;
+  cmdkCloseNow();
+});
+document.getElementById("cmdkInput")?.addEventListener("input", () => {
+  cmdkActive = 0;
+  cmdkRender();
+});
+document.getElementById("cmdkInput")?.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    cmdkCloseNow();
+    return;
+  }
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    cmdkActive++;
+    cmdkRender();
+    return;
+  }
+  if (e.key === "ArrowUp") {
+    e.preventDefault();
+    cmdkActive--;
+    cmdkRender();
+    return;
+  }
+  if (e.key === "Enter") {
+    e.preventDefault();
+    void cmdkRunActive();
+  }
+});
+document.getElementById("cmdkList")?.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-idx]");
+  if (!btn) return;
+  const idx = Number(btn.getAttribute("data-idx"));
+  if (!Number.isFinite(idx)) return;
+  cmdkActive = idx;
+  void cmdkRunActive();
+});
+
 function showTopSuggest(items, q) {
   const pop = document.getElementById("topSuggest");
   if (!pop) return;
@@ -1984,12 +2265,9 @@ document.addEventListener("click", (e) => {
 
 document.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === "k") {
-    const t = document.getElementById("topSearch");
-    if (t) {
-      e.preventDefault();
-      t.focus();
-      t.select?.();
-    }
+    e.preventDefault();
+    if (cmdkOpen) cmdkCloseNow();
+    else cmdkOpenNow();
   }
 });
 

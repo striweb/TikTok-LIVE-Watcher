@@ -331,6 +331,19 @@
       <div id="detailsBody" class="detailsBody"></div>
     </aside>
 
+    <div id="cmdkOverlay" class="cmdkOverlay" hidden>
+      <div class="cmdk" role="dialog" aria-modal="true" aria-label="Command palette">
+        <div class="cmdkTop">
+          <div class="cmdkHint mono muted">Type a command or @username</div>
+          <div class="cmdkKbdRow">
+            <span class="cmdkKbd">↑↓</span><span class="cmdkKbd">Enter</span><span class="cmdkKbd">Esc</span>
+          </div>
+        </div>
+        <input id="cmdkInput" class="input cmdkInput" type="text" spellcheck="false" placeholder="Search commands…" />
+        <div id="cmdkList" class="cmdkList" role="listbox" aria-label="Results"></div>
+      </div>
+    </div>
+
     <script src="./theme.js"></script>
     <script src="./vendor/chart.umd.min.js"></script>
     <script src="./renderer.js"></script>

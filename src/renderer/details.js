@@ -43,6 +43,16 @@ function relTime(ts) {
   return `${d}d ago`;
 }
 
+function formatDuration(ms) {
+  const n = Math.max(0, Math.floor(Number(ms || 0)));
+  if (!Number.isFinite(n) || n <= 0) return "—";
+  const sec = Math.floor(n / 1000);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (h <= 0) return `${m}m`;
+  return `${h}h ${String(m).padStart(2, "0")}m`;
+}
+
 function hashHue(str) {
   let h = 0;
   const s = String(str || "");
@@ -138,6 +148,8 @@ function render() {
     const nextDue = st.nextDueAt ? `${formatTime(st.nextDueAt)}` : "—";
     const checked = st.checkedAt ? `${relTime(st.checkedAt)} • ${formatTime(st.checkedAt)}` : "—";
     const lastLiveSeen = st.lastLiveSeenAt ? `${formatDate(st.lastLiveSeenAt)} ${formatTime(st.lastLiveSeenAt)}` : "—";
+    const liveDuration =
+      st.isLive === true && st.lastLiveStartedAt ? formatDuration(Date.now() - Number(st.lastLiveStartedAt || 0)) : "";
 
     heroCard.innerHTML = `
       <div class="detailsHero">
@@ -148,7 +160,11 @@ function render() {
             <span class="pill ${p.cls} heroPill">${p.text}</span>
           </div>
           <div class="heroSub muted">
-            Last LIVE seen: <span class="mono">${safeText(lastLiveSeen)}</span>
+            ${
+              st.isLive === true && liveDuration
+                ? `LIVE duration: <span class="mono">${safeText(liveDuration)}</span>`
+                : `Last LIVE seen: <span class="mono">${safeText(lastLiveSeen)}</span>`
+            }
             <span class="heroSep">•</span>
             Last check: <span class="mono">${safeText(checked)}</span>
           </div>
