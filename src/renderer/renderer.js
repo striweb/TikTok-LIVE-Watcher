@@ -64,6 +64,7 @@ let joinTrackerState = null;
 
 const PINNED_KEY = "pinnedProfilesV1";
 const FOCUS_KEY = "focusModeV1";
+let chartsRenderedAt = 0;
 
 function readJsonLS(key, fallback) {
   try {
@@ -108,6 +109,37 @@ function toast(msg, kind = "ok") {
     el.classList.remove("show");
     setTimeout(() => el.remove(), 220);
   }, 2200);
+}
+
+function relAge(ts) {
+  const n = Number(ts || 0);
+  if (!n) return "—";
+  const sec = Math.max(0, Math.floor((Date.now() - n) / 1000));
+  if (sec < 60) return `${sec}s`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  if (h < 48) return `${h}h`;
+  const d = Math.floor(h / 24);
+  return `${d}d`;
+}
+
+function setProMeta(id, chips) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const arr = Array.isArray(chips) ? chips.filter(Boolean) : [];
+  if (!arr.length) {
+    el.innerHTML = "";
+    return;
+  }
+  el.innerHTML = arr
+    .map((c) => {
+      const cls = String(c.cls || "");
+      const txt = String(c.text || "");
+      const title = String(c.title || "");
+      return `<span class="metaChip ${cls}" title="${title.replace(/"/g, "&quot;")}"><span class="dot"></span>${txt}</span>`;
+    })
+    .join("");
 }
 
 function isFocusMode() {
@@ -593,6 +625,14 @@ function renderStatus() {
   const liveCount = Object.values(byUser).filter((x) => x?.isLive === true).length;
   const unknownCount = Object.values(byUser).filter((x) => x?.isLive == null).length;
   const errorCount = Object.values(byUser).filter((x) => x?.ok === false).length;
+  const lastTs = Math.max(0, ...Object.values(byUser).map((x) => Number(x?.checkedAt || 0) || 0));
+  setProMeta("statusProMeta", [
+    { cls: "ok", text: `Updated ${lastTs ? relAge(lastTs) : "—"} ago`, title: lastTs ? new Date(lastTs).toLocaleString() : "" },
+    { cls: "", text: `${usernamesState.length} profiles`, title: "Total monitored profiles" },
+    liveCount ? { cls: "live", text: `${liveCount} LIVE`, title: "LIVE profiles" } : null,
+    unknownCount ? { cls: "warn", text: `${unknownCount} unknown`, title: "Unknown profiles" } : null,
+    errorCount ? { cls: "bad", text: `${errorCount} errors`, title: "Profiles with errors" } : null
+  ]);
   if (chipLive) {
     const v = chipLive.querySelector(".value");
     if (v) animateNumberText(v, liveCount);
@@ -1317,6 +1357,12 @@ function openDetails(username) {
 function renderActivity() {
   const el = document.getElementById("activityList");
   if (!el) return;
+  const today = (historyAll || []).filter((e) => e?.ts && isToday(e.ts));
+  const last = Math.max(0, ...today.map((e) => Number(e.ts || 0) || 0));
+  setProMeta("activityProMeta", [
+    { cls: "", text: `${today.length} today`, title: "Events today" },
+    { cls: last ? "ok" : "", text: `Last ${last ? relAge(last) : "—"}`, title: last ? new Date(last).toLocaleString() : "" }
+  ]);
   const events = (historyAll || []).filter((e) => NOTIFY_TYPES.has(e.type) || e.type === "error").slice(0, 6);
   el.innerHTML = "";
   if (!events.length) {
@@ -1371,6 +1417,13 @@ function parseGiftError(err) {
 function renderGiftsCard() {
   const el = document.getElementById("giftsList");
   if (!el) return;
+  const giftsToday = (historyAll || []).filter((e) => e?.type === "gift_sent" && e?.ts && isToday(e.ts));
+  const last = Math.max(0, ...giftsToday.map((e) => Number(e.ts || 0) || 0));
+  setProMeta("giftsProMeta", [
+    { cls: "", text: `${giftsToday.length} gifts today`, title: "Gift events today" },
+    { cls: "", text: `${(watchUsersState || []).length} watching`, title: "Watched viewers count" },
+    last ? { cls: "ok", text: `Last ${relAge(last)}`, title: new Date(last).toLocaleString() } : null
+  ]);
   const events = (historyAll || []).filter((e) => e?.type === "gift_sent").slice(0, 6);
   el.innerHTML = "";
 
@@ -1513,6 +1566,8 @@ function makeBarChart(canvas, { title, series, color }) {
 function renderCharts() {
   const el = document.getElementById("charts");
   if (!el) return;
+  chartsRenderedAt = Date.now();
+  setProMeta("chartsProMeta", [{ cls: "", text: "14d window", title: "Charts window" }, { cls: "ok", text: "Updated now", title: "" }]);
   destroyCharts();
   const live = buildSeries("live_started", 14);
   const joins = buildSeries("viewer_joined", 14);
@@ -1644,6 +1699,20 @@ function renderHealthBadges() {
   }
 
   renderWorkspaceBadge();
+}
+
+function renderHealthProMeta() {
+  const a = appStatus || {};
+  const socketOk = Boolean(a.statusSocketConnected);
+  const now = Date.now();
+  const until = Number(a.rateLimitedUntil || 0);
+  const inCooldown = Boolean(a.rateLimited) && until > now;
+  const nextAt = Number(a.nextScheduledCheckAt || 0);
+  setProMeta("healthProMeta", [
+    { cls: socketOk ? "ok" : "bad", text: socketOk ? "Socket OK" : "Socket DOWN", title: "Status socket" },
+    nextAt ? { cls: "", text: `Next ${formatTime(nextAt)}`, title: "Next scheduled check" } : null,
+    inCooldown ? { cls: "warn", text: `Cooldown ${formatTime(until)}`, title: "Rate limit cooldown" } : null
+  ]);
 }
 
 function densityLabel(d) {
@@ -2542,6 +2611,7 @@ window.api.onAppStatusUpdated((s) => {
   renderAppBanner();
   renderHealth();
   renderHealthBadges();
+  renderHealthProMeta();
 });
 
 window.api.getAppStatus().then((s) => {
@@ -2549,6 +2619,7 @@ window.api.getAppStatus().then((s) => {
   renderAppBanner();
   renderHealth();
   renderHealthBadges();
+  renderHealthProMeta();
 });
 
 setInterval(() => {

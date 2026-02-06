@@ -23,6 +23,11 @@
   --r-card: var(--radius);
   --r-control: 12px;
   --r-pill: 999px;
+  --icon-size: 18px;
+  --fw-title: 800;
+  --fw-h3: 900;
+  --ls-title: 0.2px;
+  --ls-h3: 0.25px;
 
   
   --glass-bg: rgba(255, 255, 255, 0.055);
@@ -568,8 +573,8 @@ html[data-density="compact"] .menuItem {
 }
 
 .title {
-  font-weight: 800;
-  letter-spacing: 0.2px;
+  font-weight: var(--fw-title, 800);
+  letter-spacing: var(--ls-title, 0.2px);
   font-size: 15px;
 }
 
@@ -630,10 +635,10 @@ html[data-density="compact"] .menuItem {
 }
 
 .h3 {
-  font-weight: 900;
+  font-weight: var(--fw-h3, 900);
   margin-bottom: 8px;
   font-size: 14px;
-  letter-spacing: 0.25px;
+  letter-spacing: var(--ls-h3, 0.25px);
 }
 
 .muted {
