@@ -1123,6 +1123,11 @@ function setDetailsOpen(open) {
 function openDetails(username) {
   const u = String(username || "").trim();
   if (!u) return;
+  // Premium: open Details in a dedicated popup window
+  if (window.api?.openDetailsPopup) {
+    window.api.openDetailsPopup(u).catch(() => {});
+    return;
+  }
   const st = (state.byUser || {})[u] || { username: u };
   const detailsSub = document.getElementById("detailsSub");
   const detailsBody = document.getElementById("detailsBody");

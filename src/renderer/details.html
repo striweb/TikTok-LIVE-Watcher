@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Details</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.v2.css" />
+  </head>
+  <body class="pageDetails">
+    <header class="topbar">
+      <div class="topbarLeft">
+        <div class="titleRow">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <div class="title">Details</div>
+            <div id="detailsSubtitle" class="sub">Status service</div>
+          </div>
+        </div>
+      </div>
+      <div class="topbarRight">
+        <button id="closeWin" class="btn ghost">Close</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="grid" style="grid-template-columns: 1fr; gap: 12px;">
+        <section class="card" id="detailsHeroCard"></section>
+
+        <div class="detailsSplit" style="margin:0;">
+          <section class="card">
+            <div class="cardHeader">
+              <div>
+                <div class="h3">Policy & schedule</div>
+                <div class="muted">Per-host interval override and timing.</div>
+              </div>
+            </div>
+            <div id="policyCardBody"></div>
+          </section>
+
+          <section class="card">
+            <div class="cardHeader">
+              <div>
+                <div class="h3">Recent events</div>
+                <div class="muted">Last 20 events for this profile.</div>
+              </div>
+              <div class="actions" style="margin-top:0;">
+                <button id="openHistory" class="btn ghost">Open History</button>
+              </div>
+            </div>
+            <div id="eventsBody"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <div id="toastCenter" class="toastCenter" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="./theme.js"></script>
+    <script src="./details.js"></script>
+  </body>
+</html>
+

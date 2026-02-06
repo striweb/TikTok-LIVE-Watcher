@@ -1,0 +1,363 @@
+const DEFAULTS = {
+  intervalMinutes: 1,
+  perHostIntervals: {}
+};
+
+function normalizeUsername(u) {
+  return String(u || "")
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase();
+}
+
+function formatTime(ts) {
+  const n = Number(ts || 0);
+  if (!n) return "—";
+  try {
+    return new Date(n).toLocaleTimeString();
+  } catch {
+    return "—";
+  }
+}
+
+function formatDate(ts) {
+  const n = Number(ts || 0);
+  if (!n) return "—";
+  try {
+    return new Date(n).toLocaleDateString();
+  } catch {
+    return "—";
+  }
+}
+
+function relTime(ts) {
+  const n = Number(ts || 0);
+  if (!n) return "—";
+  const sec = Math.max(0, Math.floor((Date.now() - n) / 1000));
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const h = Math.floor(min / 60);
+  if (h < 48) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+function hashHue(str) {
+  let h = 0;
+  const s = String(str || "");
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
+
+function avatarStyle(username) {
+  const hue = hashHue(username);
+  return `--av: linear-gradient(135deg, hsla(${hue}, 85%, 60%, 0.95), hsla(${(hue + 38) % 360}, 85%, 58%, 0.85));`;
+}
+
+function avatarLetter(username) {
+  const u = String(username || "").trim().replace(/^@+/, "");
+  return (u[0] || "?").toUpperCase();
+}
+
+function pill(isLive) {
+  if (isLive === true) return { text: "LIVE", cls: "live" };
+  if (isLive === false) return { text: "Offline", cls: "offline" };
+  return { text: "Unknown", cls: "unknown" };
+}
+
+function toast(msg, kind = "ok") {
+  const wrap = document.getElementById("toastCenter");
+  if (!wrap) return;
+  const el = document.createElement("div");
+  el.className = `toast ${kind}`;
+  el.textContent = String(msg || "");
+  wrap.appendChild(el);
+  setTimeout(() => el.classList.add("show"), 10);
+  setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => el.remove(), 220);
+  }, 2000);
+}
+
+async function copyText(text) {
+  const t = String(text || "");
+  if (!t) return false;
+  try {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      await navigator.clipboard.writeText(t);
+      return true;
+    }
+  } catch {}
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = t;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+let username = "";
+let settings = { ...DEFAULTS };
+let state = { byUser: {} };
+let historyAll = [];
+
+function readUsernameFromQuery() {
+  try {
+    const u = new URLSearchParams(location.search).get("u");
+    return normalizeUsername(u);
+  } catch {
+    return "";
+  }
+}
+
+function safeText(s) {
+  return String(s ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function render() {
+  const u = username;
+  const st = (state?.byUser || {})[u] || { username: u };
+  const p = pill(st.isLive);
+
+  document.title = u ? `@${u} — Details` : "Details";
+  const sub = document.getElementById("detailsSubtitle");
+  if (sub) sub.textContent = u ? `@${u} • ${p.text}` : "Status service";
+
+  const heroCard = document.getElementById("detailsHeroCard");
+  if (heroCard) {
+    const viewers = Number.isFinite(Number(st.viewerCount)) ? Math.round(Number(st.viewerCount)) : "—";
+    const room = st.roomId ? String(st.roomId) : "";
+    const nextDue = st.nextDueAt ? `${formatTime(st.nextDueAt)}` : "—";
+    const checked = st.checkedAt ? `${relTime(st.checkedAt)} • ${formatTime(st.checkedAt)}` : "—";
+    const lastLiveSeen = st.lastLiveSeenAt ? `${formatDate(st.lastLiveSeenAt)} ${formatTime(st.lastLiveSeenAt)}` : "—";
+
+    heroCard.innerHTML = `
+      <div class="detailsHero">
+        <div class="heroAvatar" style="${avatarStyle(u)}">${avatarLetter(u)}</div>
+        <div class="heroMain">
+          <div class="heroTop">
+            <div class="heroUser">@${safeText(u)}</div>
+            <span class="pill ${p.cls} heroPill">${p.text}</span>
+          </div>
+          <div class="heroSub muted">
+            Last LIVE seen: <span class="mono">${safeText(lastLiveSeen)}</span>
+            <span class="heroSep">•</span>
+            Last check: <span class="mono">${safeText(checked)}</span>
+          </div>
+          <div class="heroStats">
+            <div class="heroStat">
+              <div class="heroK">Viewers</div>
+              <div class="heroV mono">${safeText(viewers)}</div>
+            </div>
+            <div class="heroStat">
+              <div class="heroK">Room</div>
+              <div class="heroV mono">
+                ${
+                  room
+                    ? `<button class="copyChip mono" type="button" data-copy="${safeText(room)}" data-tip="Copy roomId" aria-label="Copy roomId">${safeText(room)}</button>`
+                    : `<span class="muted">—</span>`
+                }
+              </div>
+            </div>
+            <div class="heroStat">
+              <div class="heroK">Next due</div>
+              <div class="heroV mono">${safeText(nextDue)}</div>
+            </div>
+          </div>
+        </div>
+        <div class="detailsActions heroActions">
+          <button class="iconBtn hasTip ghost" type="button" id="actCopy" data-tip="Copy @username" aria-label="Copy username">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+              <path d="M8 8h12v12H8z"></path>
+              <path d="M4 16H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v1"></path>
+            </svg>
+          </button>
+          <button class="iconBtn hasTip" type="button" id="actChat" data-tip="Chat" aria-label="Chat">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+              <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
+            </svg>
+          </button>
+          <button class="iconBtn hasTip" type="button" id="actOverlay" data-tip="Overlay" aria-label="Overlay">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+              <path d="M14 3h7v7"></path>
+              <path d="M10 14L21 3"></path>
+              <path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"></path>
+            </svg>
+          </button>
+          <button class="iconBtn hasTip" type="button" id="actJoin" data-tip="Join Tracker" aria-label="Join Tracker">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+              <circle cx="12" cy="7" r="3"></circle>
+              <path d="M5.5 21a6.5 6.5 0 0 1 13 0"></path>
+              <path d="M19 8v6"></path>
+              <path d="M22 11h-6"></path>
+            </svg>
+          </button>
+          <button class="iconBtn hasTip ghost" type="button" id="actHistory" data-tip="History" aria-label="History">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+              <path d="M3 3v5h5"></path>
+              <path d="M3.05 13a9 9 0 1 0 .5-4.5L3 8"></path>
+              <path d="M12 7v6l4 2"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  const policyBody = document.getElementById("policyCardBody");
+  if (policyBody) {
+    const globalMin = Math.max(1, Math.min(60, Math.round(Number(settings?.intervalMinutes || 1))));
+    const perMap = settings?.perHostIntervals && typeof settings.perHostIntervals === "object" ? settings.perHostIntervals : {};
+    const override = Math.round(Number(perMap[u] || 0));
+    const overrideText = override ? String(override) : "";
+    const lastErr = st.ok === false ? String(st.error || st.reason || "error").slice(0, 220) : "";
+
+    policyBody.innerHTML = `
+      <div class="detailsGrid detailsGridV3" style="margin:0;">
+        <div class="detailsCard">
+          <div class="detailsKey">Policy interval</div>
+          <div class="detailsVal">
+            <div class="policyInline">
+              <input id="policyOverride" class="input mono" type="number" min="1" max="60" placeholder="${globalMin}" value="${overrideText}" />
+              <button id="policySave" class="btn" type="button">Save</button>
+              <button id="policyClear" class="btn ghost" type="button" ${override ? "" : "disabled"}>Use global</button>
+            </div>
+            <div class="hint">Global: ${globalMin}m • Leave empty to use global. Saved only if different.</div>
+          </div>
+        </div>
+        <div class="detailsCard">
+          <div class="detailsKey">Last check</div>
+          <div class="detailsVal mono">${st.checkedAt ? `${formatDate(st.checkedAt)} ${formatTime(st.checkedAt)}` : "—"}</div>
+        </div>
+        <div class="detailsCard">
+          <div class="detailsKey">Next due</div>
+          <div class="detailsVal mono">${st.nextDueAt ? `${formatDate(st.nextDueAt)} ${formatTime(st.nextDueAt)}` : "—"}</div>
+        </div>
+        <div class="detailsCard">
+          <div class="detailsKey">Last error</div>
+          <div class="detailsVal mono">${lastErr ? safeText(lastErr) : "—"}</div>
+        </div>
+      </div>
+    `;
+
+    policyBody.querySelector("#policySave")?.addEventListener("click", async () => {
+      const raw = String(policyBody.querySelector("#policyOverride")?.value || "").trim();
+      const v = raw ? Math.round(Number(raw)) : 0;
+      if (raw && (!Number.isFinite(v) || v < 1 || v > 60)) {
+        toast("Invalid interval (1–60).", "bad");
+        return;
+      }
+      const nextMap = { ...(perMap || {}) };
+      if (!raw) delete nextMap[u];
+      else if (v === globalMin) delete nextMap[u];
+      else nextMap[u] = v;
+
+      try {
+        settings = await window.api.setSettings({ ...settings, perHostIntervals: nextMap });
+        window.__applyTheme?.(settings);
+        toast("Policy saved.");
+        render();
+      } catch (err) {
+        toast(`Error: ${String(err?.message || err).slice(0, 80)}`, "bad");
+      }
+    });
+    policyBody.querySelector("#policyClear")?.addEventListener("click", async () => {
+      try {
+        const nextMap = { ...(perMap || {}) };
+        delete nextMap[u];
+        settings = await window.api.setSettings({ ...settings, perHostIntervals: nextMap });
+        window.__applyTheme?.(settings);
+        toast("Using global policy.");
+        render();
+      } catch (err) {
+        toast(`Error: ${String(err?.message || err).slice(0, 80)}`, "bad");
+      }
+    });
+  }
+
+  const eventsBody = document.getElementById("eventsBody");
+  if (eventsBody) {
+    const ev = (historyAll || []).filter((e) => normalizeUsername(e?.username) === u).slice(0, 20);
+    if (!ev.length) {
+      eventsBody.innerHTML = `<div class="emptyState"><div class="emptyTitle">No events</div><div class="emptySub">Nothing recorded for @${safeText(u)} yet.</div></div>`;
+    } else {
+      eventsBody.innerHTML = `
+        <div class="activityList">
+          ${ev
+            .map((e) => {
+              const when = e?.ts ? `${relTime(e.ts)} • ${formatTime(e.ts)}` : "—";
+              const t = safeText(e?.type || "event");
+              const msg = safeText(e?.summary || e?.reason || e?.error || "");
+              return `<div class="activityItem animIn">
+                <div><b>${t}</b> <span class="muted mono">${when}</span></div>
+                <div class="muted">${msg}</div>
+              </div>`;
+            })
+            .join("")}
+        </div>
+      `;
+    }
+  }
+
+  // Wire hero actions
+  document.getElementById("actCopy")?.addEventListener("click", async () => {
+    const ok = await copyText(`@${u}`);
+    toast(ok ? "Copied @username." : "Copy failed.", ok ? "ok" : "bad");
+  });
+  document.getElementById("actChat")?.addEventListener("click", async () => await window.api.openChatPopup(u));
+  document.getElementById("actOverlay")?.addEventListener("click", async () => await window.api.openOverlay(u));
+  document.getElementById("actJoin")?.addEventListener("click", async () => await window.api.openJoinTrackerPopup(u));
+  document.getElementById("actHistory")?.addEventListener("click", async () => await window.api.openHistoryPopup());
+
+  // Copy chips (roomId)
+  document.querySelectorAll("button[data-copy]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const v = btn.getAttribute("data-copy") || "";
+      const ok = await copyText(v);
+      toast(ok ? "Copied." : "Copy failed.", ok ? "ok" : "bad");
+      if (ok) btn.classList.add("copied");
+      setTimeout(() => btn.classList.remove("copied"), 900);
+    });
+  });
+}
+
+async function load() {
+  username = readUsernameFromQuery();
+  if (!username) username = "";
+
+  settings = { ...DEFAULTS, ...(await window.api.getSettings()) };
+  window.__applyTheme?.(settings);
+  state = (await window.api.getState()) || { byUser: {} };
+  const h = await window.api.getHistory();
+  historyAll = Array.isArray(h) ? h : [];
+  render();
+}
+
+document.getElementById("closeWin")?.addEventListener("click", () => window.close());
+document.getElementById("openHistory")?.addEventListener("click", async () => await window.api.openHistoryPopup());
+
+window.api.onSettingsUpdated((s) => {
+  settings = { ...DEFAULTS, ...(s || {}) };
+  window.__applyTheme?.(settings);
+  render();
+});
+window.api.onStateUpdated((s) => {
+  state = s || { byUser: {} };
+  render();
+});
+window.api.onHistoryUpdated((h) => {
+  historyAll = Array.isArray(h) ? h : [];
+  render();
+});
+
+void load();
+

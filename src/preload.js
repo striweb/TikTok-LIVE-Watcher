@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld("api", {
   openHistoryPopup: () => ipcRenderer.invoke("open-history-popup"),
   openSettingsPopup: () => ipcRenderer.invoke("open-settings-popup"),
   openJoinTrackerPopup: (hostUsername) => ipcRenderer.invoke("open-join-tracker-popup", hostUsername),
+  openDetailsPopup: (username) => ipcRenderer.invoke("open-details-popup", username),
   getJoinTrackerState: () => ipcRenderer.invoke("get-join-tracker-state"),
   setWatchUsers: (watchUsers) => ipcRenderer.invoke("set-watch-users", watchUsers),
   clearJoinEvents: () => ipcRenderer.invoke("clear-join-events"),

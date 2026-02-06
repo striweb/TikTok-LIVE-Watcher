@@ -83,6 +83,7 @@ const chatWindows = new Map();
 let historyWindow = null;
 let settingsWindow = null;
 let joinTrackerWindow = null;
+let detailsWindow = null;
 let soundWindow = null;
 
 const gotLock = app.requestSingleInstanceLock();
@@ -824,9 +825,53 @@ function openJoinTrackerPopup(hostUsername) {
   return joinTrackerWindow;
 }
 
+function openDetailsPopup(username) {
+  const u = normalizeUsername(username);
+  if (!u) return null;
+
+  if (detailsWindow && !detailsWindow.isDestroyed()) {
+    detailsWindow.show();
+    detailsWindow.focus();
+    detailsWindow
+      .loadFile(path.join(__dirname, "renderer", "details.html"), { query: { u } })
+      .catch(() => {});
+    return detailsWindow;
+  }
+
+  detailsWindow = createPrettyPopupWindow({
+    width: 880,
+    height: 760,
+    minWidth: 720,
+    minHeight: 620,
+    title: `@${u} — Details`,
+    preload: path.join(__dirname, "preload.js")
+  });
+
+  detailsWindow.loadFile(path.join(__dirname, "renderer", "details.html"), { query: { u } }).catch(() => {});
+
+  detailsWindow.on("closed", () => {
+    detailsWindow = null;
+  });
+
+  detailsWindow.webContents.once("did-finish-load", () => {
+    if (detailsWindow && !detailsWindow.isDestroyed()) {
+      detailsWindow.webContents.send("settings-updated", getSettings());
+      detailsWindow.webContents.send("state-updated", lastState);
+      detailsWindow.webContents.send("history-updated", history);
+      detailsWindow.webContents.send("notifications-state-updated", getNotificationsState());
+      detailsWindow.webContents.send("app-status-updated", getAppStatus());
+    }
+  });
+
+  return detailsWindow;
+}
+
 function broadcastState() {
   if (!mainWindow) return;
   mainWindow.webContents.send("state-updated", lastState);
+  if (detailsWindow && !detailsWindow.isDestroyed()) {
+    detailsWindow.webContents.send("state-updated", lastState);
+  }
 }
 
 function broadcastSettings() {
@@ -840,6 +885,9 @@ function broadcastSettings() {
   if (joinTrackerWindow && !joinTrackerWindow.isDestroyed()) {
     joinTrackerWindow.webContents.send("settings-updated", settings);
   }
+  if (detailsWindow && !detailsWindow.isDestroyed()) {
+    detailsWindow.webContents.send("settings-updated", settings);
+  }
 }
 
 function broadcastHistory() {
@@ -848,6 +896,9 @@ function broadcastHistory() {
   }
   if (historyWindow && !historyWindow.isDestroyed()) {
     historyWindow.webContents.send("history-updated", history);
+  }
+  if (detailsWindow && !detailsWindow.isDestroyed()) {
+    detailsWindow.webContents.send("history-updated", history);
   }
 }
 
@@ -1849,6 +1900,15 @@ ipcMain.handle("open-settings-popup", () => {
 ipcMain.handle("open-join-tracker-popup", (_e, hostUsername) => {
   try {
     const win = openJoinTrackerPopup(hostUsername);
+    return { ok: Boolean(win) };
+  } catch (err) {
+    return { ok: false, error: String(err?.message || err) };
+  }
+});
+
+ipcMain.handle("open-details-popup", (_e, username) => {
+  try {
+    const win = openDetailsPopup(username);
     return { ok: Boolean(win) };
   } catch (err) {
     return { ok: false, error: String(err?.message || err) };
