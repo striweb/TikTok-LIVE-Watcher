@@ -14,6 +14,7 @@ const DEFAULTS = {
   themeMode: "system",
   darkVariant: "midnight",
   themePack: "default",
+  uiEngine: "legacy",
   accent: "violet",
   density: "comfortable",
   dashboardView: "kanban",
@@ -62,6 +63,12 @@ function normalizeThemePack(v) {
   const t = String(v || "").trim();
   if (t === "default" || t === "ops" || t === "streamer" || t === "minimal" || t === "neon" || t === "midnightPro") return t;
   return DEFAULTS.themePack;
+}
+
+function normalizeUiEngine(v) {
+  const t = String(v || "").trim();
+  if (t === "legacy" || t === "react") return t;
+  return DEFAULTS.uiEngine;
 }
 
 function normalizeAccent(v) {
@@ -199,6 +206,7 @@ async function load() {
   document.getElementById("themeMode").value = normalizeThemeMode(settings.themeMode);
   document.getElementById("darkVariant").value = normalizeDarkVariant(settings.darkVariant);
   document.getElementById("themePack").value = normalizeThemePack(settings.themePack);
+  document.getElementById("uiEngine").value = normalizeUiEngine(settings.uiEngine);
   document.getElementById("accent").value = normalizeAccent(settings.accent);
   document.getElementById("density").value = normalizeDensity(settings.density);
   document.getElementById("dashboardView").value = normalizeDashboardView(settings.dashboardView);
@@ -238,6 +246,7 @@ async function save() {
     themeMode: normalizeThemeMode(document.getElementById("themeMode").value),
     darkVariant: normalizeDarkVariant(document.getElementById("darkVariant").value),
     themePack: normalizeThemePack(document.getElementById("themePack").value),
+    uiEngine: normalizeUiEngine(document.getElementById("uiEngine").value),
     accent: normalizeAccent(document.getElementById("accent").value),
     density: normalizeDensity(document.getElementById("density").value),
     dashboardView: normalizeDashboardView(document.getElementById("dashboardView").value),
@@ -384,6 +393,7 @@ window.api.onSettingsUpdated((s) => {
   document.getElementById("themeMode").value = normalizeThemeMode(settings.themeMode);
   document.getElementById("darkVariant").value = normalizeDarkVariant(settings.darkVariant);
   document.getElementById("themePack").value = normalizeThemePack(settings.themePack);
+  document.getElementById("uiEngine").value = normalizeUiEngine(settings.uiEngine);
   document.getElementById("accent").value = normalizeAccent(settings.accent);
   document.getElementById("density").value = normalizeDensity(settings.density);
   document.getElementById("dashboardView").value = normalizeDashboardView(settings.dashboardView);

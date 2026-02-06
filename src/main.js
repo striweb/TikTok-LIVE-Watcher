@@ -66,6 +66,7 @@ const DEFAULTS = {
   themeMode: "system",
   darkVariant: "midnight",
   themePack: "default",
+  uiEngine: "legacy",
   accent: "violet",
   density: "comfortable",
   dashboardView: "kanban",
@@ -452,6 +453,12 @@ function normalizeThemePack(v) {
   return DEFAULTS.themePack;
 }
 
+function normalizeUiEngine(v) {
+  const t = String(v || "").trim();
+  if (t === "legacy" || t === "react") return t;
+  return DEFAULTS.uiEngine;
+}
+
 function normalizeAccent(v) {
   const a = String(v || "").trim();
   if (["violet", "blue", "teal", "green", "amber", "red"].includes(a)) return a;
@@ -513,6 +520,7 @@ function getSettings() {
     themeMode: normalizeThemeMode(store.get("themeMode")),
     darkVariant: normalizeDarkVariant(store.get("darkVariant")),
     themePack: normalizeThemePack(store.get("themePack")),
+    uiEngine: normalizeUiEngine(store.get("uiEngine")),
     accent: normalizeAccent(store.get("accent")),
     density: normalizeDensity(store.get("density")),
     dashboardView: normalizeDashboardView(store.get("dashboardView")),
@@ -539,6 +547,7 @@ function setSettings(next) {
     themeMode: normalizeThemeMode(next.themeMode),
     darkVariant: normalizeDarkVariant(next.darkVariant),
     themePack: normalizeThemePack(next.themePack),
+    uiEngine: normalizeUiEngine(next.uiEngine),
     accent: normalizeAccent(next.accent),
     density: normalizeDensity(next.density),
     dashboardView: normalizeDashboardView(next.dashboardView),
@@ -1539,7 +1548,11 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
+  const legacyIndex = path.join(__dirname, "renderer", "index.html");
+  const reactIndex = path.join(__dirname, "react-ui", "dist", "index.html");
+  const engine = normalizeUiEngine(store.get("uiEngine"));
+  const target = engine === "react" && fs.existsSync(reactIndex) ? reactIndex : legacyIndex;
+  mainWindow.loadFile(target);
 
   mainWindow.webContents.on("before-input-event", (event, input) => {
     const key = String(input.key || "");
