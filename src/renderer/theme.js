@@ -33,6 +33,7 @@ function applyTheme(settings) {
   const density = String(settings?.density || "comfortable");
   const dark = String(settings?.darkVariant || "midnight");
   const layout = String(settings?.dashboardLayout || "default");
+  const pack = String(settings?.themePack || "default");
 
   document.documentElement.dataset.themeMode = mode;
   document.documentElement.dataset.theme = theme;
@@ -40,6 +41,7 @@ function applyTheme(settings) {
   document.documentElement.dataset.density = density;
   document.documentElement.dataset.dark = dark;
   document.documentElement.dataset.layout = layout;
+  document.documentElement.dataset.pack = pack;
 
   ensureSystemThemeListener();
 }

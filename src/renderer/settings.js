@@ -13,6 +13,7 @@ const DEFAULTS = {
   soundCustomPath: "",
   themeMode: "system",
   darkVariant: "midnight",
+  themePack: "default",
   accent: "violet",
   density: "comfortable",
   dashboardView: "kanban",
@@ -57,6 +58,12 @@ function normalizeDarkVariant(v) {
   return DEFAULTS.darkVariant;
 }
 
+function normalizeThemePack(v) {
+  const t = String(v || "").trim();
+  if (t === "default" || t === "ops" || t === "streamer" || t === "minimal" || t === "neon" || t === "midnightPro") return t;
+  return DEFAULTS.themePack;
+}
+
 function normalizeAccent(v) {
   const a = String(v || "").trim();
   if (["violet", "blue", "teal", "green", "amber", "red"].includes(a)) return a;
@@ -65,7 +72,7 @@ function normalizeAccent(v) {
 
 function normalizeDensity(v) {
   const d = String(v || "").trim();
-  if (d === "comfortable" || d === "compact") return d;
+  if (d === "comfortable" || d === "compact" || d === "ultra") return d;
   return DEFAULTS.density;
 }
 
@@ -191,6 +198,7 @@ async function load() {
   document.getElementById("soundCustomPath").value = String(settings.soundCustomPath || "");
   document.getElementById("themeMode").value = normalizeThemeMode(settings.themeMode);
   document.getElementById("darkVariant").value = normalizeDarkVariant(settings.darkVariant);
+  document.getElementById("themePack").value = normalizeThemePack(settings.themePack);
   document.getElementById("accent").value = normalizeAccent(settings.accent);
   document.getElementById("density").value = normalizeDensity(settings.density);
   document.getElementById("dashboardView").value = normalizeDashboardView(settings.dashboardView);
@@ -229,6 +237,7 @@ async function save() {
     soundCustomPath: String(document.getElementById("soundCustomPath").value || ""),
     themeMode: normalizeThemeMode(document.getElementById("themeMode").value),
     darkVariant: normalizeDarkVariant(document.getElementById("darkVariant").value),
+    themePack: normalizeThemePack(document.getElementById("themePack").value),
     accent: normalizeAccent(document.getElementById("accent").value),
     density: normalizeDensity(document.getElementById("density").value),
     dashboardView: normalizeDashboardView(document.getElementById("dashboardView").value),
@@ -374,6 +383,7 @@ window.api.onSettingsUpdated((s) => {
   document.getElementById("soundCustomPath").value = String(settings.soundCustomPath || "");
   document.getElementById("themeMode").value = normalizeThemeMode(settings.themeMode);
   document.getElementById("darkVariant").value = normalizeDarkVariant(settings.darkVariant);
+  document.getElementById("themePack").value = normalizeThemePack(settings.themePack);
   document.getElementById("accent").value = normalizeAccent(settings.accent);
   document.getElementById("density").value = normalizeDensity(settings.density);
   document.getElementById("dashboardView").value = normalizeDashboardView(settings.dashboardView);

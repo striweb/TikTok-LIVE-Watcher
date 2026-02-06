@@ -265,6 +265,7 @@ function updateKanbanCard(card, st) {
   card.classList.toggle("sev-offline", st?.isLive === false);
   card.classList.toggle("sev-unknown", st?.isLive == null);
   card.classList.toggle("sev-error", st?.ok === false);
+  card.classList.toggle("sevPulse", shouldSevPulse(st));
   card.dataset.user = st.username;
   card.innerHTML = `
     <div class="profileCell">
@@ -458,6 +459,15 @@ function severityClassFor(st) {
   return "sev-unknown";
 }
 
+function shouldSevPulse(st) {
+  const now = Date.now();
+  const ch = Number(st?.lastChangeAt || 0);
+  const err = st?.ok === false ? Number(st?.checkedAt || 0) : 0;
+  const ts = Math.max(ch, err);
+  if (!Number.isFinite(ts) || ts <= 0) return false;
+  return now - ts < 25 * 1000;
+}
+
 function updateStatusSegmented() {
   const wrap = document.querySelector(".statusSeg");
   if (!wrap) return;
@@ -638,7 +648,7 @@ function renderStatus() {
     const room = st.roomId ? String(st.roomId) : "";
 
     const row = document.createElement("div");
-    row.className = `statusRow animIn ${severityClassFor(st)}`;
+    row.className = `statusRow animIn ${severityClassFor(st)}${shouldSevPulse(st) ? " sevPulse" : ""}`;
     row.dataset.user = st.username;
     row.innerHTML = `
       <div class="profileCell">
@@ -1561,10 +1571,12 @@ function densityLabel(d) {
 function updateDensityToggle() {
   const btnComfort = document.getElementById("densityComfortable");
   const btnCompact = document.getElementById("densityCompact");
-  if (!btnComfort || !btnCompact) return;
+  const btnUltra = document.getElementById("densityUltra");
+  if (!btnComfort || !btnCompact || !btnUltra) return;
   const d = String(settings?.density || "comfortable");
   btnComfort.classList.toggle("active", d === "comfortable");
   btnCompact.classList.toggle("active", d === "compact");
+  btnUltra.classList.toggle("active", d === "ultra");
 }
 
 async function load() {
@@ -1698,6 +1710,16 @@ document.getElementById("densityComfortable").addEventListener("click", async ()
 document.getElementById("densityCompact").addEventListener("click", async () => {
   try {
     settings = await window.api.setSettings({ ...settings, density: "compact" });
+    window.__applyTheme?.(settings);
+    updateDensityToggle();
+  } catch (err) {
+    setStatus(`Error: ${String(err?.message || err).slice(0, 80)}`);
+  }
+});
+
+document.getElementById("densityUltra")?.addEventListener("click", async () => {
+  try {
+    settings = await window.api.setSettings({ ...settings, density: "ultra" });
     window.__applyTheme?.(settings);
     updateDensityToggle();
   } catch (err) {
